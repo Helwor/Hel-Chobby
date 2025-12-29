@@ -4,8 +4,8 @@ In the subtable "Chili lobby", set loadLocalWidgets = true, (make the line if it
 
 Implemented so far:
 PM notification ingame
-lobby commands (that can also work ingame), <user_name> can be autocompleted (in game in some case, and in lobby)
-for this to work in game, it requires GameToLobbyMessage.lua and lobby_command.lua from Hel-K
+Lobby commands (that can also work ingame), <user_name> can be autocompleted (in game in some case, and in lobby)
+For this to work in game, it requires GameToLobbyMessage.lua and lobby_command.lua from Hel-K
     /r <message> to reply to last pm user
     /pm <user_name> <message>
     /join <room_name>
@@ -13,7 +13,7 @@ for this to work in game, it requires GameToLobbyMessage.lua and lobby_command.l
 
 Battle room chat reported in game (need Widgets/gui_chili_proconsole_test.lua from Hel-K)
 
-options added in Lobby Setting's tab
+Options added in Lobby Setting's tab:
     Notify (including ingame) on High Level 1v1
     Notify (including ingame) on any battle started
 Implemented slide bars in Game and Graphic settings tabs
