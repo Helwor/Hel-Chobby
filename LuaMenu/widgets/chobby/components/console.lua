@@ -1,5 +1,7 @@
 Console = LCS.class{}
 
+local Echo = Spring.Echo
+
 function Console:init(channelName, sendMessageListener, noHistoryLoad, onResizeFunc, isBattleChat)
 	self.listener = sendMessageListener
 	self.showDate = true
@@ -393,13 +395,76 @@ end
 -- I was having hang detection because of a log > 15 MB and couldn't connect, code was really not optimized
 -- That new code process 15MB log in 5 ms.
 -- Also fixed potential missing/broken line.
+local numformat = false
+local previousDay, nextDay, isToday, monthName, daySuffix
+local end_time_pattern = '%d%d:%d%d%] '
+local time_pattern = '^(%d%d%d%d)%-(%d%d)%-(%d%d)T(%d%d):(%d%d):%d%d %- %[(%d%d):(%d%d)%] '
+do
+	local date = {year = 2025, month = 1, day = 1, hour = 12} -- 
+	local oneDay = 86400 -- one day in seconds
+	local osdate, ostime = os.date, os.time
+	function previousDay(year, month, day)
+		date.year, date.month, date.day = year, month, day
+	   local timestamp = ostime(date) - oneDay
+	   return osdate("%Y", timestamp), osdate("%m", timestamp), osdate("%d", timestamp)
+	end
 
-local function process(s)
-    local st = s:find("%[%d%d:%d%d%] ") or 1
-    local fin = s:find("%s+$") or 0
-    return "\255\128\128\128" .. s:sub(st, fin - 1)
+	function nextDay(year, month, day)
+		date.year, date.month, date.day = year, month, day
+	   local timestamp = ostime(date) + oneDay
+	   return osdate("%Y", timestamp), osdate("%m", timestamp), osdate("%d", timestamp)
+	end
+	function isToday(year, month, day)
+		return osdate("%Y") == year and osdate("%m") == month and osdate("%d") == day
+	end
+	function monthName(month)
+		date.month = month
+		return osdate("%B", ostime(date)):sub(1,3)
+	end
+	function daySuffix(d)
+		if d:sub(1,1) == '1' then
+			return 'th'
+		end
+		d = d:sub(2)
+		if d == '1' then
+			return 'st'
+		elseif d == '2' then
+			return 'nd'
+		elseif d == '3' then
+			return 'rd'
+		else
+			return 'th'
+		end
+	end
+	
 end
-local Echo = Spring.Echo
+local curye, curmo, curda = false, false, false
+local function process(s)
+	local ye, mo, da, h, min, loc_h, loc_min = s:match(time_pattern)
+	local st = 1 -- where do we start extracting the string from
+	if ye then
+		local nh, nloc_h = tonumber(h), tonumber(loc_h)
+		if nh > 12 and nloc_h < 12 then
+			ye, mo, da = nextDay(ye, mo, da)
+		elseif nh < 12 and nloc_h > 12 then
+			ye, mo, da = previousDay(ye, mo, da)
+		end
+		if not isToday(ye, mo, da) then
+			if ye ~= curye or mo ~= curmo or da ~= curda then
+				curye, curmo, curda = ye, mo, da
+				if numformat then
+					s = s:gsub("("..end_time_pattern..")", mo ..'/'.. da .. " %1", 1)
+				else
+					s = s:gsub("("..end_time_pattern..")", monthName(mo) .. ' ' .. da:gsub('^0', '').. daySuffix(da) .. " %1", 1)
+				end
+			end
+		end
+	   st = s:find("%[.-"..end_time_pattern)
+	end
+   local fin = s:find("%s+$") or 0
+   return "\255\128\128\128" .. s:sub(st, fin - 1)
+end
+
 function Console:LoadHistory(numLines)
 	if not self.channelName then
 		return
