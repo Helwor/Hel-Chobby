@@ -38,7 +38,7 @@ Implemented slide bars in Game and Graphic settings tabs
 
 Implemented additional options in Game and Graphic settings tabs
 
-Implemented emotes (need LuaUI\Widgets\Include\emotes.lua and eventually Widgets/gui_chili_proconsole_test.lua, from Hel-K.
+Implemented emotes (need LuaUI/Widgets/Include/emotes.lua and eventually Widgets/gui_chili_proconsole_test.lua, from Hel-K.
 
 Find name of emotes in emotes.lua and add more via the pro console widget option ingame.
 
