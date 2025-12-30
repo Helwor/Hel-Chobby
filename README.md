@@ -3,6 +3,7 @@ To enable the mod, user need to modify the file LuaMenu\Config\IGL_data.lua.
 In the subtable "Chili lobby", set loadLocalWidgets = true, (make the line if it doesn't exist).
 
 Implemented so far:
+Fast and Memory savvy log history load.
 Message history system where the user can navigate through his past message using up and down arrow, similar to ingame
 PM notification ingame
 Lobby commands (that can also work ingame), <user_name> can be autocompleted (in game in some case, and in lobby)
