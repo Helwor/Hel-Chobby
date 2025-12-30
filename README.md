@@ -44,6 +44,8 @@ Find name of emotes in emotes.lua and add more via the pro console widget option
 
 Usage in message: Blabla :<emote_name>: blabla.
 
+Proper history timestamp.
+
 
 
 
