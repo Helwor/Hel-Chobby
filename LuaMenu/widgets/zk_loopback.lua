@@ -10,11 +10,11 @@ return {
 	enabled = true,
 }
 end
-if WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
+if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
     Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
+    WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
     return false
 end
-WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
 
 
 LIB_LOBBY_DIRNAME = "libs/liblobby/lobby/" -- why is this needed? why doesnt api load first?

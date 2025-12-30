@@ -13,11 +13,11 @@ function widget:GetInfo()
 		handler   = true,
 	}
 end
-if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
-    Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
-	WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
-    return false
-end
+-- if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
+--     Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
+-- 	WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
+--     return false
+-- end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 -- Local Variables

@@ -13,11 +13,11 @@ function widget:GetInfo()
         handler   = true,
     }
 end
-if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
-    Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
-    WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
-    return false
-end
+-- if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
+--     Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
+--     WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
+--     return false
+-- end
 local sig = '[' .. widget:GetInfo().name .. ']:'
 local Echo = Spring.Echo
 
@@ -129,6 +129,7 @@ local function ReceiveMessage(msg, cli, writeable) -- WE CAN ASLO DISCUSS THROUG
     if not lobby then
         lobby = WG.LibLobby and WG.LibLobby.lobby --(lobby is interface_shared + interface_zerok see api_lobby.lua)
     end
+    msg = msg and msg:gsub('%s+$', '')
     if msg:find('^tell ') then
         local key = sentence(msg, 1)
 
@@ -191,9 +192,9 @@ local function ReceiveMessage(msg, cli, writeable) -- WE CAN ASLO DISCUSS THROUG
         if name then
             local w = widgetHandler:FindByName(name)
             if not w then
-                Echo('warn, this is an api widget', name)
                 for k,v in widgetHandler.widgets:iter() do
                     if v.GetInfo().name == name then
+                        Echo('warn, this is an api widget', name)
                         w = v
                         break
                     end
@@ -211,6 +212,7 @@ local function ReceiveMessage(msg, cli, writeable) -- WE CAN ASLO DISCUSS THROUG
     elseif msg:find('^open ') then
         local room = msg:sub(6)
         if room:len() > 0 then
+            Echo('Private chat', room,room:len(), os.clock())
             WG.Chobby.interfaceRoot.OpenPrivateChat(room)
         end
         return
