@@ -2,11 +2,87 @@ Console = LCS.class{}
 
 local Echo = Spring.Echo
 
+local ProcessHistoryLine, WriteMonthDay
+do
+	local previousDay, nextDay, isToday, monthName, daySuffix
+	local end_time_pattern = '%d%d:%d%d%] '
+	local time_pattern = '^(%d%d%d%d)%-(%d%d)%-(%d%d)T(%d%d):(%d%d):%d%d %- %[(%d%d):(%d%d)%] '
+	do
+		local date = {year = 2025, month = 1, day = 1, hour = 12} -- 
+		local oneDay = 86400 -- one day in seconds
+		local osdate, ostime = os.date, os.time
+		function previousDay(year, month, day)
+			date.year, date.month, date.day = year, month, day
+		   local timestamp = ostime(date) - oneDay
+		   return osdate("%Y", timestamp), osdate("%m", timestamp), osdate("%d", timestamp)
+		end
+
+		function nextDay(year, month, day)
+			date.year, date.month, date.day = year, month, day
+		   local timestamp = ostime(date) + oneDay
+		   return osdate("%Y", timestamp), osdate("%m", timestamp), osdate("%d", timestamp)
+		end
+		function isToday(year, month, day)
+			return osdate("%Y") == year and osdate("%m") == month and osdate("%d") == day
+		end
+		function monthName(month)
+			date.month = month
+			return osdate("%B", ostime(date)):sub(1,3)
+		end
+		function daySuffix(d)
+			if d:sub(1,1) == '1' then
+				return 'th'
+			end
+			d = d:sub(2)
+			if d == '1' then
+				return 'st'
+			elseif d == '2' then
+				return 'nd'
+			elseif d == '3' then
+				return 'rd'
+			else
+				return 'th'
+			end
+		end
+	end
+	function WriteMonthDay(month, day, numFormat)
+		if numFormat then
+			return month ..'/'.. day
+		else
+			return monthName(month) .. ' ' .. day:gsub('^0', '').. daySuffix(day)
+		end
+	end
+	function ProcessHistoryLine(s, curDate, numFormat)
+		local ye, mo, da, h, min, loc_h, loc_min = s:match(time_pattern)
+		local st = 1 -- where do we start extracting the string from
+		if ye then
+			local nh, nloc_h = tonumber(h), tonumber(loc_h)
+			if nh > 12 and nloc_h < 12 then
+				ye, mo, da = nextDay(ye, mo, da)
+			elseif nh < 12 and nloc_h > 12 then
+				ye, mo, da = previousDay(ye, mo, da)
+			end
+			-- if not isToday(ye, mo, da) then
+				if ye ~= curDate.year or mo ~= curDate.month or da ~= curDate.day then
+					curDate.year = ye
+					curDate.month = mo
+					curDate.day = da
+					s = s:gsub("("..end_time_pattern..")", WriteMonthDay(mo, da, numFormat) .. " %1", 1)
+				end
+			-- end
+		   st = s:find("%[.-"..end_time_pattern)
+		end
+	   local fin = s:find("%s+$") or 0
+	   return "\255\128\128\128" .. s:sub(st, fin - 1)
+	end
+end
+
 function Console:init(channelName, sendMessageListener, noHistoryLoad, onResizeFunc, isBattleChat)
 	self.listener = sendMessageListener
 	self.showDate = true
 	self.dateFormat = "%H:%M"
-
+	self.currentDate = {year = '0', month = '0', day = '0'}
+	self.dateNumFormat = false
 	self.sentMsgHistory = {}
 	self.sentMsgHistoryCount = 0
 	self.sentMsgHistoryMax = 500
@@ -14,7 +90,6 @@ function Console:init(channelName, sendMessageListener, noHistoryLoad, onResizeF
 	self.currentMsgBuffer = ""
 
 	self.channelName = channelName
-
 	local onResize
 	if onResizeFunc then
 		onResize = {
@@ -77,7 +152,12 @@ function Console:init(channelName, sendMessageListener, noHistoryLoad, onResizeF
 	}
 
 	local function onConfigurationChange(listener, key, value)
-		if key == "chatFontSize" then
+		if key == "lastLoginChatLength" then
+			if self.tbHistory then
+				self:ClearHistory()
+				self:LoadHistory(value)
+			end
+		elseif key == "chatFontSize" then
 			local oldFont = self.ebInputText.font
 			-- Relevant settings depend on skin
 			local fontSettings = {
@@ -309,9 +389,18 @@ function Console:AddMessage(message, userName, dateOverride, color, thirdPerson,
 			end
 		end
 		-- FIXME: the input "date" should ideally be a table so we can coerce the format
-		local currentDate = timeOverride or os.date(self.dateFormat)
-		txt = txt .. "\255\128\128\128[" .. currentDate .. "] "
-		whiteText = whiteText .. "[" .. currentDate .. "] "
+		local currentTime = timeOverride or os.date(self.dateFormat)
+		local curDate = self.currentDate
+		local completeDate = false
+		local nowYe, nowMo, nowDa = os.date('%Y'), os.date('%m'), os.date('%d')
+		if curDate.year ~= nowYe or curDate.month ~= nowMo or curDate.day ~= nowDa then
+			Echo(self.channelName, 'added message with new date', nowYe ..'/'.. nowMo..'/'..nowDa, 'old date: ' .. curDate.year..'/'..curDate.month..'/'..curDate.day)
+			Echo('the new message (timeOverride:'..tostring(timeOverride)..') is ', txt)
+			curDate.year, curDate.month, curDate.day = nowYe, nowMo, nowDa
+			completeDate = WriteMonthDay(nowMo, nowDa, self.dateNumFormat) .. " " .. currentTime
+		end
+		txt = txt .. "\255\128\128\128[" .. (completeDate or currentTime) .. "] "
+		whiteText = whiteText .. "[" .. currentTime .. "] "
 		if color ~= nil then
 			txt = txt .. color
 		end
@@ -360,7 +449,6 @@ function Console:AddMessage(message, userName, dateOverride, color, thirdPerson,
 	end
 
 	onTextClick, textTooltip = WG.BattleProposalHandler.AddClickableInvites(userName, txt, message, onTextClick or {}, textTooltip or {})
-	
 	txt = txt .. message
 	onTextClick, textTooltip = WG.BrowserHandler.AddClickableUrls(txt, onTextClick or {}, textTooltip or {})
 
@@ -392,83 +480,16 @@ function Console:SetTopic(newTopic)
 	end
 end
 
--- I was having hang detection because of a log > 15 MB and couldn't connect, code was really not optimized
--- That new code process 15MB log in 5 ms.
--- Also fixed potential missing/broken line.
-local numformat = false
-local previousDay, nextDay, isToday, monthName, daySuffix
-local end_time_pattern = '%d%d:%d%d%] '
-local time_pattern = '^(%d%d%d%d)%-(%d%d)%-(%d%d)T(%d%d):(%d%d):%d%d %- %[(%d%d):(%d%d)%] '
-do
-	local date = {year = 2025, month = 1, day = 1, hour = 12} -- 
-	local oneDay = 86400 -- one day in seconds
-	local osdate, ostime = os.date, os.time
-	function previousDay(year, month, day)
-		date.year, date.month, date.day = year, month, day
-	   local timestamp = ostime(date) - oneDay
-	   return osdate("%Y", timestamp), osdate("%m", timestamp), osdate("%d", timestamp)
-	end
-
-	function nextDay(year, month, day)
-		date.year, date.month, date.day = year, month, day
-	   local timestamp = ostime(date) + oneDay
-	   return osdate("%Y", timestamp), osdate("%m", timestamp), osdate("%d", timestamp)
-	end
-	function isToday(year, month, day)
-		return osdate("%Y") == year and osdate("%m") == month and osdate("%d") == day
-	end
-	function monthName(month)
-		date.month = month
-		return osdate("%B", ostime(date)):sub(1,3)
-	end
-	function daySuffix(d)
-		if d:sub(1,1) == '1' then
-			return 'th'
-		end
-		d = d:sub(2)
-		if d == '1' then
-			return 'st'
-		elseif d == '2' then
-			return 'nd'
-		elseif d == '3' then
-			return 'rd'
-		else
-			return 'th'
-		end
-	end
-	
-end
-local curye, curmo, curda = false, false, false
-local function process(s)
-	local ye, mo, da, h, min, loc_h, loc_min = s:match(time_pattern)
-	local st = 1 -- where do we start extracting the string from
-	if ye then
-		local nh, nloc_h = tonumber(h), tonumber(loc_h)
-		if nh > 12 and nloc_h < 12 then
-			ye, mo, da = nextDay(ye, mo, da)
-		elseif nh < 12 and nloc_h > 12 then
-			ye, mo, da = previousDay(ye, mo, da)
-		end
-		if not isToday(ye, mo, da) then
-			if ye ~= curye or mo ~= curmo or da ~= curda then
-				curye, curmo, curda = ye, mo, da
-				if numformat then
-					s = s:gsub("("..end_time_pattern..")", mo ..'/'.. da .. " %1", 1)
-				else
-					s = s:gsub("("..end_time_pattern..")", monthName(mo) .. ' ' .. da:gsub('^0', '').. daySuffix(da) .. " %1", 1)
-				end
-			end
-		end
-	   st = s:find("%[.-"..end_time_pattern)
-	end
-   local fin = s:find("%s+$") or 0
-   return "\255\128\128\128" .. s:sub(st, fin - 1)
-end
 
 function Console:LoadHistory(numLines)
+	-- I was having hang detection because of a log > 15 MB and couldn't connect, code was really not optimized
+	-- That new code process 15MB log in 5 ms.
+	-- Also fixed potential missing/broken line and implemented proper time stamping for older days.
 	if not self.channelName then
 		return
 	end
+
+	local curDate, numFormat = self.currentDate, self.dateNumFormat
 	local path = 'chatLogs/' .. self.channelName .. ".txt"
 	if not VFS.FileExists(path) then
 		return
@@ -498,20 +519,22 @@ function Console:LoadHistory(numLines)
         i = i + 1
         if i >= beginning and line ~= '' then
         	j = j + 1
-        	lines[j] = process(line)
+        	lines[j] = ProcessHistoryLine(line, curDate, numFormat)
         end
     end
 
     file:close()
-
+    local curDate = self.currentDate
+    -- Echo('End of loading history of ' .. self.channelName .. ', current date is', curDate.year, curDate.month, curDate.day)
     self.tbHistory:SetText(table.concat(lines, '\n'))
 end
 
 
 function Console:ClearHistory()
 	self.tbHistory:SetText("")
+	self.currentDate = {year = '0', month = '0', day = '0'}
 end
 
 function Console:Delete()
-	self = nil
+	self = nil -- doesn't make any sense?
 end

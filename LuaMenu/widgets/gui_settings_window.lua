@@ -846,6 +846,37 @@ local function GetLobbyTabControls()
 		valign = "top",
 		align = "left",
 		objectOverrideFont = Configuration:GetFont(2),
+		caption = "History Chat Length",
+	}
+	children[#children + 1] = Trackbar:New {
+		x = COMBO_X,
+		y = offset,
+		width  = COMBO_WIDTH,
+		height = 30,
+		value  = Configuration.lastLoginChatLength or 25,
+		min    = 0,
+		max    = 500,
+		step   = 1,
+		OnChange = {
+			function(obj, value)
+				if freezeSettings then
+					return
+				end
+				Configuration:SetConfigValue("lastLoginChatLength", value)
+			end
+		}
+	}
+	offset = offset + ITEM_OFFSET
+
+
+	children[#children + 1] = Label:New {
+		x = 20,
+		y = offset + TEXT_OFFSET,
+		width = 90,
+		height = 40,
+		valign = "top",
+		align = "left",
+		objectOverrideFont = Configuration:GetFont(2),
 		caption = "Notification Volume",
 	}
 	children[#children + 1] = Trackbar:New {

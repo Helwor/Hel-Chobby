@@ -553,6 +553,7 @@ end
 
 function Configuration:GetConfigData()
 	return {
+		lastLoginChatLength = self.lastLoginChatLength,
 		notifyStartedHigh1v1 = self.notifyStartedHigh1v1,
 		notifyAnyStarted = self.notifyAnyStarted,
 		serverAddress = self.serverAddress,
