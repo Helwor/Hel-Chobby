@@ -35,6 +35,8 @@ Options added in Lobby Setting's tab:
 
     Notify (including ingame) on any battle started
 
+    History length
+
 Implemented slide bars in Game and Graphic settings tabs
 
 Implemented additional options in Game and Graphic settings tabs
@@ -47,7 +49,6 @@ Usage in message: Blabla :<emote_name>: blabla.
 
 Proper history and messages timestamp.
 
-History length is optionnable.
 
 
 
