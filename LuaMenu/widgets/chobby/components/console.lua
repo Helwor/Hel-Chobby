@@ -2,6 +2,20 @@ Console = LCS.class{}
 
 local Echo = Spring.Echo
 
+-- getting emotes
+local emotes 
+local luaconf = VFS.FileExists('LuaUI/Config/ZK_data.lua') and VFS.Include('LuaUI/Config/ZK_data.lua', nil, VFS.RAW_FIRST)
+if luaconf then
+    emotes = luaconf['EPIC Menu'] and luaconf['EPIC Menu'].config.epic_Chili_Pro_Console_emotes
+    luaconf = nil
+end
+if not emotes then
+    emotes = VFS.FileExists('LuaUI/Widgets/Include/emotes.lua')
+        and VFS.Include('LuaUI/Widgets/Include/emotes.lua', nil, VFS.RAW_FIRST)
+        or {}
+end
+
+
 local ProcessHistoryLine, WriteMonthDay
 do
 	local previousDay, nextDay, isToday, monthName, daySuffix
@@ -191,9 +205,8 @@ function Console:init(channelName, sendMessageListener, noHistoryLoad, onResizeF
 			return false
 		else
 			self.subword = nil
-
-			local up, down = key == keyUP, key == keyDOWN
 			local newtext, block = false, false
+			local up, down = key == keyUP, key == keyDOWN
 			if up or down then
 				local cursor = self.sentMsgHistoryCursor
 				local count = self.sentMsgHistoryCount
@@ -220,6 +233,11 @@ function Console:init(channelName, sendMessageListener, noHistoryLoad, onResizeF
 					self.sentMsgHistoryCursor = self.sentMsgHistoryCount + 1
 					newtext = ""
 					block = true -- block the action of escape that would leave the current lobby tab
+				end
+			else
+				local text, n =  (self.ebInputText.text):gsub(':([%w_]+):', emotes)
+				if (n or 0) > 0 then
+					newtext = text
 				end
 			end
 			if newtext then
@@ -394,8 +412,6 @@ function Console:AddMessage(message, userName, dateOverride, color, thirdPerson,
 		local completeDate = false
 		local nowYe, nowMo, nowDa = os.date('%Y'), os.date('%m'), os.date('%d')
 		if curDate.year ~= nowYe or curDate.month ~= nowMo or curDate.day ~= nowDa then
-			Echo(self.channelName, 'added message with new date', nowYe ..'/'.. nowMo..'/'..nowDa, 'old date: ' .. curDate.year..'/'..curDate.month..'/'..curDate.day)
-			Echo('the new message (timeOverride:'..tostring(timeOverride)..') is ', txt)
 			curDate.year, curDate.month, curDate.day = nowYe, nowMo, nowDa
 			completeDate = WriteMonthDay(nowMo, nowDa, self.dateNumFormat) .. " " .. currentTime
 		end

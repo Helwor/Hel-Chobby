@@ -11,18 +11,6 @@ Interface.jsonCommands = {}
 -- define command format with pattern (regex)
 Interface.commandPattern = {}
 
--- getting emotes
-local emotes 
-local luaconf = VFS.FileExists('LuaUI/Config/ZK_data.lua') and VFS.Include('LuaUI/Config/ZK_data.lua', nil, VFS.RAW_FIRST)
-if luaconf then
-    emotes = luaconf['EPIC Menu'] and luaconf['EPIC Menu'].config.epic_Chili_Pro_Console_emotes
-    luaconf = nil
-end
-if not emotes then
-    emotes = VFS.FileExists('LuaUI/Widgets/Include/emotes.lua')
-        and VFS.Include('LuaUI/Widgets/Include/emotes.lua', nil, VFS.RAW_FIRST)
-        or {}
-end
 
 -------------------------------------------------
 -- Initialization
@@ -592,7 +580,6 @@ function Interface:KickUser(userName)
 end
 
 function Interface:SayBattle(message)
-	message = message:gsub(':([%w_]+):', emotes)
 	if self:SendSplit(message) then
 		return self
 	end
@@ -609,7 +596,6 @@ function Interface:SayBattle(message)
 end
 
 function Interface:SayBattleEx(message)
-	message = message:gsub(':([%w_]+):', emotes)
 	if self:SendSplit(message) then
 		return self
 	end
@@ -754,7 +740,6 @@ end
 function Interface:Say(chanName, message)
 	-- Say {"Place":0,"Target":"zk","User":"GoogleFrog","IsEmote":false,"Text":"bla","Ring":false,"Time":"2016-06-25T07:17:20.7548313Z"
 	-- Echo('interface_zerok.lua receive Say',message,os.clock())
-	message = message:gsub(':([%w_]+):', emotes)
 	local sendData = {
 		Place = 0, -- Does 0 mean say to a channel???
 		Target = chanName,
@@ -770,7 +755,6 @@ end
 
 function Interface:SayEx(chanName, message)
 	-- Say {"Place":0,"Target":"zk","User":"GoogleFrog","IsEmote":false,"Text":"bla","Ring":false,"Time":"2016-06-25T07:17:20.7548313Z"
-	message = message:gsub(':([%w_]+):', emotes)
 	local sendData = {
 		Place = 0, -- Does 0 mean say to a channel???
 		Target = chanName,
@@ -786,7 +770,6 @@ end
 
 function Interface:SayPrivate(userName, message)
 	-- Say {"Place":0,"Target":"zk","User":"GoogleFrog","IsEmote":false,"Text":"bla","Ring":false,"Time":"2016-06-25T07:17:20.7548313Z"
-	message = message:gsub(':([%w_]+):', emotes)
 	local sendData = {
 		Place = 2, -- Does 2 mean say to a player???
 		Target = userName,
@@ -802,7 +785,6 @@ end
 
 function Interface:SayPrivateEx(userName, message)
 	-- Say {"Place":0,"Target":"zk","User":"GoogleFrog","IsEmote":false,"Text":"bla","Ring":false,"Time":"2016-06-25T07:17:20.7548313Z"
-	message = message:gsub(':([%w_]+):', emotes)
 	local sendData = {
 		Place = 2, -- Does 2 mean say to a player???
 		Target = userName,
