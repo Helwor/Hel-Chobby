@@ -235,8 +235,8 @@ function Console:init(channelName, sendMessageListener, noHistoryLoad, onResizeF
 					block = true -- block the action of escape that would leave the current lobby tab
 				end
 			else
-				local text, n =  (self.ebInputText.text):gsub(':([%w_]+):', emotes)
-				if (n or 0) > 0 then
+				local text =  (self.ebInputText.text):gsub(':([%w_]+):', emotes)
+				if text ~= self.ebInputText.text then
 					newtext = text
 				end
 			end
