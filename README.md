@@ -1,3 +1,7 @@
+# Hel-Chobby
+
+QUICK GUIDE
+
 The moded chobby is contained in the 2 directories libs and LuaMenu, and must be placed in the root of the installation of ZK.
 
 To enable the mod, user need to modify the file LuaMenu\Config\IGL_data.lua.
