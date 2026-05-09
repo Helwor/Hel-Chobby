@@ -2,15 +2,21 @@
 
 QUICK GUIDE
 
+
+
 The moded chobby is contained in the 2 directories libs and LuaMenu, and must be placed in the root of the installation of ZK.
 
 To enable the mod, user need to modify the file LuaMenu\Config\IGL_data.lua.
 
 In the subtable "Chili lobby", set loadLocalWidgets = true, (make the line if it doesn't exist).
 
+Use Update Script to be placed in ZK Install Dir for easy installation and update.
 
 Implemented so far:
 
+User can simulate newline by writing /n in the message
+
+Multi line paste now working
 
 Fast and Memory savvy log history load.
 
