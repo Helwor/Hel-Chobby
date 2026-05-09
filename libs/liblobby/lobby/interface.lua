@@ -1,6 +1,7 @@
 -- Official SpringRTS Lobby protocol implementation
 -- http://springrts.com/dl/LobbyProtocol/
 local Echo = Spring.Echo
+Echo('MY INTERFACE LOADED')
 VFS.Include(LIB_LOBBY_DIRNAME .. "json.lua")
 VFS.Include(LIB_LOBBY_DIRNAME .. "interface_shared.lua")
 

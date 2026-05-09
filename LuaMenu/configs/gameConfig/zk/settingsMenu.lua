@@ -484,6 +484,61 @@ local settingsConfig = {
 				},
 			},
 			{
+				name = "AllowDrawMapDeferredEvents",
+				humanName = "Draw Map Deferred Events",
+				options = {
+					{
+						name = "Off (Default)",
+						apply = {
+							AllowDrawMapDeferredEvents = 0,
+						}
+					},
+					{
+						name = "On",
+						apply = {
+							AllowDrawMapDeferredEvents = 1,
+						}
+					},
+				},
+			},
+
+			{
+				name = "AllowDrawMapPostDeferredEvents",
+				humanName = "Draw Map Post Deferred Events",
+				options = {
+					{
+						name = "Off (Default)",
+						apply = {
+							AllowDrawMapPostDeferredEvents = 0,
+						}
+					},
+					{
+						name = "On",
+						apply = {
+							AllowDrawMapPostDeferredEvents = 1,
+						}
+					},
+				},
+			},
+			{
+				name = "AlwaysSendDrawGroundEvents",
+				humanName = "Always Send Draw Ground Events",
+				options = {
+					{
+						name = "Off (Default)",
+						apply = {
+							AlwaysSendDrawGroundEvents = 0,
+						}
+					},
+					{
+						name = "On",
+						apply = {
+							AlwaysSendDrawGroundEvents = 1,
+						}
+					},
+				},
+			},
+			{
 				name = "UseNewChili",
 				humanName = "Experimental Interface Renderer",
 				options = {
@@ -557,6 +612,9 @@ local settingsConfig = {
 					}
 				end,
 			},
+
+
+
 			{
 				name = "UnitGhostIconsDimming",
 				humanName = "Ghost Building Alpha",
@@ -641,24 +699,6 @@ local settingsConfig = {
 				},
 			},
 			{
-				name = "CompressTextures",
-				humanName = "Compress Textures",
-				options = {
-					{
-						name = "Off",
-						apply = {
-							CompressTextures = 0,
-						}
-					},
-					{
-						name = "On",
-						apply = {
-							CompressTextures = 1,
-						}
-					},
-				},
-			},
-			{
 				name = "TextureMemPoolSize",
 				humanName = "Texture Mem Pool Size",
 				options = {
@@ -695,8 +735,8 @@ local settingsConfig = {
 				},
 			},
 			{
-				name = "HighResTextures",
-				humanName = "High Res Textures",
+				name = "HighResInfoTextures",
+				humanName = "High Res 'Info' Textures",
 				options = {
 					{
 						name = "On (Default)",
@@ -717,15 +757,127 @@ local settingsConfig = {
 				humanName = "High Res Los",
 				options = {
 					{
+						name = "Off (Default)",
+						apply = {
+							HighResLos = 0,
+						}
+					},
+					{
 						name = "On",
 						apply = {
 							HighResLos = 1,
 						}
 					},
+				},
+			},
+			-- {  -- CAUSE FBO ATLAS ERROR SPAM SINCE LAST ENGINE
+			-- 	name = "CompressTextures",
+			-- 	humanName = "Compress Textures",
+			-- 	options = {
+			-- 		{
+			-- 			name = "Off (Default)",
+			-- 			apply = {
+			-- 				CompressTextures = 0
+
+			-- 			}
+			-- 		},
+			-- 		{
+			-- 			name = "On (BUGGED)",
+			-- 			apply = {
+			-- 				CompressTextures = 1
+			-- 			}
+			-- 		},
+			-- 	},
+			-- },
+			{
+				name = "BuildIconsFirst",
+				humanName = "Build Icons First",
+				options = {
+					{
+						name = "Off (Default)",
+						apply = {
+							BuildIconsFirst = 0
+
+						}
+					},
+					{
+						name = "On",
+						apply = {
+							BuildIconsFirst = 1
+						}
+					},
+				},
+			},
+			{
+				name = "ColorElev",
+				humanName = "Colored Height Map",
+				options = {
+					{
+						name = "On (Default)",
+						apply = {
+							ColorElev = 1
+						}
+					},
 					{
 						name = "Off",
 						apply = {
-							HighResLos = 0,
+							ColorElev = 0
+						}
+					},
+				},
+			},
+			{
+				name = "DebugGLStacktraces",
+				humanName = "GL Debug Trace",
+				options = {
+					{
+						name = "Off (Default)",
+						apply = {
+							DebugGLStacktraces = 0
+
+						}
+					},
+					{
+						name = "On",
+						apply = {
+							DebugGLStacktraces = 1
+						}
+					},
+				},
+			},
+			{
+				name = "ExtraTextureUpdateRate",
+				humanName = "'Extra' Texture Update Rate",
+				options = {
+					{
+						name = "45 (Default)",
+						apply = {
+							ExtraTextureUpdateRate = 45
+
+						}
+					},
+					{
+						name = "60",
+						apply = {
+							ExtraTextureUpdateRate = 60
+						}
+					},
+					{
+						name = "75",
+						apply = {
+							ExtraTextureUpdateRate = 75
+						}
+					},
+					{
+						name = "90",
+						apply = {
+							ExtraTextureUpdateRate = 90
+						}
+					},
+					{
+						name = "105",
+						apply = {
+							ExtraTextureUpdateRate = 105
 						}
 					},
 				},
@@ -1784,6 +1936,48 @@ local settingsConfig = {
 				},
 			},
 			{
+				name = "MaxSounds",
+				humanName = "Max Sounds",
+				options = {
+					{
+						name = "128 (Default)",
+						apply = {
+							MaxSounds = 128,
+						}
+					},
+					{
+						name = "96",
+						apply = {
+							MaxSounds = 96,
+						}
+					},
+					{
+						name = "64",
+						apply = {
+							MaxSounds = 64,
+						}
+					},
+					{
+						name = "48",
+						apply = {
+							MaxSounds = 48,
+						}
+					},
+					{
+						name = "32",
+						apply = {
+							MaxSounds = 32,
+						}
+					},
+					{
+						name = "16",
+						apply = {
+							MaxSounds = 16,
+						}
+					},
+				},
+			},
+			{
 				name = "HardwareCursor",
 				humanName = "Hardware Cursor",
 				options = {
@@ -1797,6 +1991,101 @@ local settingsConfig = {
 						name = "Off",
 						apply = {
 							HardwareCursor = 0,
+						}
+					},
+				},
+			},
+			{
+				name = "High Res Timer",
+				humanName = "HighResTimer",
+				options = {
+					{
+						name = "Off (Default)",
+						apply = {
+							UseHighResTimer = 0,
+						}
+					},
+					{
+						name = "On",
+						apply = {
+							UseHighResTimer = 1,
+						}
+					},
+				},
+			},
+
+			{
+				name = "LogFlushLevel",
+				humanName = "Log Flush Level",
+				options = {
+					{
+						name = "All",
+						apply = {
+							LogFlushLevel = 0,
+						}
+					},
+					{
+						name = "Debug",
+						apply = {
+							LogFlushLevel = 20,
+						}
+					},
+					{
+						name = "Info",
+						apply = {
+							LogFlushLevel = 30,
+						}
+					},
+					{
+						name = "Notice",
+						apply = {
+							LogFlushLevel = 35,
+						}
+					},
+					{
+						name = "Warning",
+						apply = {
+							LogFlushLevel = 40,
+						}
+					},
+					{
+						name = "Error (Default)",
+						apply = {
+							LogFlushLevel = 50,
+						}
+					},
+					{
+						name = "Fatal",
+						apply = {
+							LogFlushLevel = 60,
+						}
+					},
+					{
+						name = "Never",
+						apply = {
+							LogFlushLevel = 255,
+						}
+					},
+
+				},
+			},
+
+
+			{
+				name = "MiniMapCanFlip",
+				humanName = "MiniMap Can Flip",
+				options = {
+					{
+						name = "Off (Default)",
+						apply = {
+							MiniMapCanFlip = 0
+
+						}
+					},
+					{
+						name = "On",
+						apply = {
+							MiniMapCanFlip = 1
 						}
 					},
 				},
@@ -1989,7 +2278,7 @@ local settingsConfig = {
 			},
 			{
 				name = "SmoothBuffer",
-				humanName = "Smooth Buffer",
+				humanName = "Net Smooth Buffer",
 				options = {
 					{
 						name = "On",
@@ -2103,19 +2392,18 @@ local settingsConfig = {
 			},
 			{
 				name = "GCControl",
-				humanName = "Set Garbage Collector rate",
+				humanName = "Garbage Collector rate",
 				options = {
 					{
-						name = "1/frame",
+						name = "forced 1/frame",
 						apply = {
-							
-							LuaGCControl = 0,
+							LuaGCControl = 1,
 						}
 					},
 					{
-						name = "30/sec",
+						name = "lazy",
 						apply = {
-							LuaGCControl = 1,
+							LuaGCControl = 0,
 						}
 					},
 				},
@@ -2203,7 +2491,19 @@ local settingsDefault = {
 	MaxDynamicMapLights = 1,
 	MaxDynamicModelLights = 1,
 	SetCoreAffinity = 0,
-	
+	-- CompressTextures = "Off (Default)", -- CAUSE FBO ATLAS ERROR SPAM SINCE LAST ENGINE
+	BuildIconsFirst = "Off (Default)",
+	MiniMapCanFlip = "Off (Default)",
+	AllowDrawMapPostDeferredEvents = "Off (Default)",
+	AllowDrawMapDeferredEvents = "Off (Default)",
+	AlwaysSendDrawGroundEvents = "Off (Default)",
+	DebugGLStacktraces = "Off (Default)",
+	HighResLos = "Off (Default)",
+	ColorElev = "On (Default)",
+	ExtraTextureUpdateRate = "45 (Default)",
+	MaxSounds = "128 (Default)",
+	UseHighResTimer = "Off (Default)",
+	LogFlushLevel = "Error (Default)",
 }
 
 local settingsNames = {}

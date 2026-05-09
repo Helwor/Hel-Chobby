@@ -205,9 +205,12 @@ end
 -- Split handling
 ------------------------
 
-local SPLIT_MULTIPLIER = 1.4
+local SPLIT_MULTIPLIER = 1.45
 local SPLIT_TO_PLAYER_MULT = 0.25
-local LOWER_RATING_PROP = 0.6
+local LOWER_RATING_PROP = 0.5
+local SPLIT_LEEWAY_TIME = 40
+local EVEN_TEAMS_THREHSOLD = 30
+local CONF_EXPIRE_TIME = 240
 local SPLIT_SEP = "ƒ"
 local SPLIT_TEST_MODE = false
 
@@ -232,7 +235,17 @@ function Interface:IsBlockedFromJoining(battleID, getMessage)
 	if not self.blockedBattles then
 		return false
 	end
-	if not self.blockedBattles[battleID] then
+	if not (self.blockedBattles and self.blockedBattles[battleID]) then
+		-- Fallback to configuration-based check.
+		local config = WG.Chobby and WG.Chobby.Configuration
+		if config.blockedJoinBattles and config.blockedJoinBattles[battleID] then
+			local block = config.blockedJoinBattles[battleID]
+			if block.expireTime > os.time() then
+				if self.battles[block.referenceBattleID] and self.battles[block.referenceBattleID].playerCount >= block.blockRemoveSize then
+					return true, block.message
+				end
+			end
+		end
 		return false
 	end
 	local blocked, message = self.blockedBattles[battleID](getMessage)
@@ -259,15 +272,26 @@ function Interface:ProcessSplit(data, battle, duplicateMessageTime)
 		return true
 	end
 	self.blockedBattles = self.blockedBattles or {}
+	local config = WG.Chobby and WG.Chobby.Configuration
 	
 	if (self.users[self:GetMyUserName()].casualSkill or 0) >= ratingThreshold then
 		-- Go to new battle
+		local message = "Unable to join. You've been matched to " .. self.battles[newBattleID].title .. " as a result of a lobby split."
+		local blockRemoveSize = self.battles[newBattleID].maxPlayers * (1 - LOWER_RATING_PROP)
+		config.blockedJoinBattles = {
+			[oldBattleID] = {
+				expireTime = os.time() + CONF_EXPIRE_TIME,
+				referenceBattleID = newBattleID,
+				blockRemoveSize = blockRemoveSize,
+				message = message,
+			}
+		}
 		self.blockedBattles[oldBattleID] = function (getMessage)
 			if not self.battles[newBattleID] then
 				return false
 			end
-			if self.battles[newBattleID].playerCount >= math.floor(playerCount*(1 - LOWER_RATING_PROP)*0.75) or SPLIT_TEST_MODE then
-				return true, getMessage and ("Unable to join. You've been matched to " .. self.battles[newBattleID].title .. " as a result of a lobby split.")
+			if self.battles[newBattleID].playerCount >= blockRemoveSize or SPLIT_TEST_MODE then
+				return true, getMessage and message
 			end
 			return false
 		end
@@ -275,12 +299,22 @@ function Interface:ProcessSplit(data, battle, duplicateMessageTime)
 		self:JoinBattle(newBattleID)
 	else
 		-- Stay in old battle
+		local message = "Unable to join. You've been matched to " .. self.battles[oldBattleID].title .. " as a result of a lobby split."
+		local blockRemoveSize = self.battles[oldBattleID].maxPlayers * LOWER_RATING_PROP
+		config.blockedJoinBattles = {
+			[oldBattleID] = {
+				expireTime = os.time() + CONF_EXPIRE_TIME,
+				referenceBattleID = newBattleID,
+				blockRemoveSize = blockRemoveSize,
+				message = message,
+			}
+		}
 		self.blockedBattles[newBattleID] = function (getMessage)
 			if not self.battles[oldBattleID] then
 				return false
 			end
-			if self.battles[oldBattleID].playerCount >= math.floor(playerCount*LOWER_RATING_PROP*0.75) or SPLIT_TEST_MODE then
-				return true, getMessage and ("Unable to join. You've been matched to " .. self.battles[oldBattleID].title .. " as a result of a lobby split.")
+			if self.battles[oldBattleID].playerCount >= blockRemoveSize or SPLIT_TEST_MODE then
+				return true, getMessage and message
 			end
 			return false
 		end
@@ -314,7 +348,8 @@ function Interface:SendSplit(message)
 		return true
 	end
 	
-	local playerRequirement = math.max(myBattle.maxPlayers + 4, math.floor((myBattle.maxPlayers * SPLIT_MULTIPLIER) / 4 + 0.00001) * 4)
+	local gridSize = (myBattle.maxPlayers > EVEN_TEAMS_THREHSOLD) and 2 or 4
+	local playerRequirement = math.max(myBattle.maxPlayers + 4, math.ceil((myBattle.maxPlayers * SPLIT_MULTIPLIER) / gridSize + 0.00001) * gridSize)
 	if moderatorMode then
 		playerRequirement = myBattle.maxPlayers - 2 -- Experiment?
 	end
@@ -326,6 +361,18 @@ function Interface:SendSplit(message)
 			})
 		end
 		return true
+	end
+	if myBattle.lastRunningTime then
+		local remainingTime = (SPLIT_LEEWAY_TIME + myBattle.lastRunningTime) - os.clock()
+		if remainingTime > 0 then
+			if WG.Chotify then
+				WG.Chotify:Post({
+					title = "Split",
+					body = "Cannot split so soon after game end. Try again in " .. math.ceil(remainingTime) .. " seconds.",
+				})
+			end
+			return true
+		end
 	end
 	if myBattle.isRunning and not SPLIT_TEST_MODE then
 		if WG.Chotify then
@@ -1001,6 +1048,14 @@ function Interface:PwJoinPlanet(planetID)
 	return self
 end
 
+function Interface:PwCancel() -- Leave attack or defend queue
+	self.planetwarsData.attackingPlanet = nil
+	self.planetwarsData.attackingPlanetAttacker = nil
+	self.planetwarsData.defendingPlanet = nil
+	self.planetwarsData.defendingPlanetAttacker = nil
+	self:_SendCommand("PwCancel {}")
+	return self
+end
 function Interface:JoinFactionRequest(factionName)
 	local sendData = {
 		Faction = factionName
@@ -1422,6 +1477,7 @@ function Interface:_BattleUpdate(data)
 	self:_OnUpdateBattleInfo(header.BattleID, battleInfo)
 
 	if header.IsRunning ~= nil then
+		-- battle.RunningSince should be set by this point.
 		self:_OnBattleIngameUpdate(header.BattleID, header.IsRunning)
 	end
 end
@@ -1911,7 +1967,7 @@ function Interface:_PwStatus(data)
 		self.PW_ENABLED = 2
 	end
 	--PwStatus {"PlanetWarsMode":2,"MinLevel":5}
-	self:_OnPwStatus(data.PlanetWarsMode, data.MinLevel)
+	self:_OnPwStatus(data.PlanetWarsMode, data.MinLevel, data.AttackerPhaseMinutes , data.DefenderPhaseMinutes, data.MaxAttackCharges)
 end
 Interface.jsonCommands["PwStatus"] = Interface._PwStatus
 
@@ -1921,23 +1977,52 @@ function Interface:_PwMatchCommand(data)
 		self.PW_DEFEND = 2
 		self.PW_INACTIVE = 3
 	end
-	--<PwMatchCommand {"AttackerFaction":"Hegemony","DeadlineSeconds":993,"DefenderFactions":[],"Mode":1,"Options":[{"Count":0,"Map":"RustyDelta_Final","Needed":2,"PlanetID":3932,"PlanetName":"Vishnu"},{"Count":0,"Map":"Altored Divide Remake V3","Needed":2,"PlanetID":3933,"PlanetName":"Brunhilde"}]}
-	self:_OnPwMatchCommand(data.AttackerFaction, data.DefenderFactions, data.Mode, data.Options, data.DeadlineSeconds)
+	local attackerList = data.AttackerFactions or (data.AttackerFaction and {data.AttackerFaction})
+	self:_OnPwMatchCommand(attackerList, data.DefenderFactions, data.Mode, data.Options, data.DeadlineSeconds)
+	-- data.Options
+	--	{
+	--		public int Count { get; set; }
+	--		public string Map { get; set; }
+	--		public int Needed { get; set; }
+	--		public int PlanetID { get; set; }
+	--		public string PlanetImage { get; set; }
+	--		public List<string> StructureImages { get; set; }
+	--		public int IconSize { get; set; }
+	--		public string PlanetName { get; set; }
+	--		public bool CanSelectForBattle { get; set; }
+	--		public bool PlayerIsAttacker { get; set; }
+	--		public bool PlayerIsDefender { get; set; }
+	--		/// <summary>
+	--		/// Faction shortcut of the attacker. Together with <see cref="PlanetID"/> forms the (planet, attacker)
+	--		/// key that identifies this attack slot. Clients must echo it back in <see cref="PwJoinPlanet"/>.
+	--		/// </summary>
+	--		public string AttackerFaction { get; set; }
+	--		/// <summary>Average PW-WHR of the projected attacker squad (top-TeamSize volunteers). 0 when none.</summary>
+	--		public int AttackerAvgWhr { get; set; }
+	--		/// <summary>Average PW-WHR of the projected defender squad. Null in AttackCollect phase or when no volunteers.</summary>
+	--		public int? DefenderAvgWhr { get; set; }
+	--		/// <summary>Attacker win chance 0-100 derived from WHR delta. Null when either side is empty.</summary>
+	--		public int? WinChance { get; set; }
+	--	}
 end
 Interface.jsonCommands["PwMatchCommand"] = Interface._PwMatchCommand
 
+function Interface:_PwAttackCharges(data)
+	self:_OnPwAttackCharges(data.Current , data.NextRechargeTime)
+end
+Interface.jsonCommands["PwAttackCharges"] = Interface._PwAttackCharges
 function Interface:_PwRequestJoinPlanet(data)
-	self:_OnPwRequestJoinPlanet(data.PlanetID)
+	self:_OnPwRequestJoinPlanet(data.PlanetID, data.AttackerFaction)
 end
 Interface.jsonCommands["PwRequestJoinPlanet"] = Interface._PwRequestJoinPlanet
 
 function Interface:_PwJoinPlanetSuccess(data)
-	self:_OnPwJoinPlanetSuccess(data.PlanetID)
+	self:_OnPwJoinPlanetSuccess(data.PlanetID, data.AttackerFaction)
 end
 Interface.jsonCommands["PwJoinPlanetSuccess"] = Interface._PwJoinPlanetSuccess
 
 function Interface:_PwAttackingPlanet(data)
-	self:_OnPwAttackingPlanet(data.PlanetID)
+	self:_OnPwAttackingPlanet(data.PlanetID, data.AttackerFaction)
 end
 Interface.jsonCommands["PwAttackingPlanet"] = Interface._PwAttackingPlanet
 
@@ -2102,5 +2187,6 @@ Interface.jsonCommands["SiteToLobbyCommand"] = Interface._OnSiteToLobbyCommand
 --ForceJoinBattle
 --LinkSteam
 --PwMatchCommand
+--PwAttackCharges
 
 return Interface

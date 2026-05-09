@@ -68,6 +68,7 @@ local LUAMENU_SETTING = "changeSetting "
 local OPEN_SETTINGS_TAB = "openSettingsTab "
 local LOAD_FILENAME = "loadFilename "
 local RESTART_GAME = "restartGame"
+local START_FROM_SCRIPT = "startFromScript_"
 local GAME_INIT = "ingameInfoInit"
 local GAME_START = "ingameInfoStart"
 local REPORT_USER = "reportUser"
@@ -130,6 +131,7 @@ end
 -- Lobby Overlay
 
 local function HandleLobbyOverlay(msg)
+	local Chobby = WG.Chobby
 	--Spring.Echo("HandleLobbyOverlay", msg)
 	local interfaceRoot = Chobby and Chobby.interfaceRoot
 	if interfaceRoot then
@@ -196,6 +198,15 @@ local function HandleRestartGame(msg)
 	WG.SteamCoopHandler.RestartGame()
 end
 
+local function HandleStartFromScript(msg)
+	if string.find(msg, START_FROM_SCRIPT) ~= 1 then
+		return
+	end
+	msg = string.sub(msg, 17)
+	Spring.Echo("msg", msg)
+	local script = Spring.Utilities.CustomKeyToUsefulTable(msg)
+	WG.SteamCoopHandler.AttemptGameStart("script", script.gametype, script.mapname, script)
+end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 -- Ingame Info
@@ -289,16 +300,17 @@ end
 -- Battle room chat
 
 local function ShouldSendLobbyUpdatesIngame()
-	local debug = conf.debugLobbyGameChat
-	if conf.enableDebugBuffer then
+	local Conf = WG.Chobby.Configuration
+	local debug = Conf.debugLobbyGameChat
+	if Conf.enableDebugBuffer then
 		if debug then
-			Spring.Echo("ShouldSendLobbyUpdatesIngame true, reason: debug buffer")
+			Spring.Echo("ShouldSendLobbyUpdatesIngame", "debug buffer")
 		end
 		return true
 	end
 	if Spring.GetGameName() == "" then
 		if debug then
-			Spring.Echo("ShouldSendLobbyUpdatesIngame false, reason: empty game name")
+			Spring.Echo("ShouldSendLobbyUpdatesIngame", "GameName")
 		end
 		return false
 	end
@@ -306,13 +318,13 @@ local function ShouldSendLobbyUpdatesIngame()
 	local myBattleID = lobby and lobby:GetMyBattleID()
 	if not myBattleID then
 		if debug then
-			Spring.Echo("ShouldSendLobbyUpdatesIngame false, reason: no myBattleID")
+			Spring.Echo("ShouldSendLobbyUpdatesIngame", "myBattleID")
 		end
 		return false
 	end
-	if conf:IsLobbyVisible() then
+	if Conf:IsLobbyVisible() then
 		if debug then
-			Spring.Echo("ShouldSendLobbyUpdatesIngame false, reason: lobby is visible")
+			Spring.Echo("ShouldSendLobbyUpdatesIngame", "lobbyVisible")
 		end
 		return false
 	end
@@ -903,6 +915,9 @@ function widget:RecvLuaMsg(msg)
 	if HandleRestartGame(msg) then
 		return
 	end
+	if HandleStartFromScript(msg) then
+		return
+	end
 	if HandleGameInfoInit(msg) then
 		return
 	end
@@ -920,6 +935,7 @@ end
 
 
 function widget:ActivateMenu()
+	local Chobby = WG.Chobby
 	INMENU = true
 	INGAME = false
 

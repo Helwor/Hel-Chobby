@@ -213,13 +213,13 @@ function Configuration:init()
 	self.lastLoginChatLength = 25
 	self.notifyForAllChat = true
 	self.autosaveOnMatchmaker = true
-	self.planetwarsNotifications = false -- Possibly too intrusive? See how it goes.
+	self.planetwarsNotifications2 = false -- Possibly too intrusive? See how it goes.
 	self.ingameNotifcations = true -- Party, chat
 	self.nonFriendNotifications = true -- Party, chat
 	self.friendNotifyIngame = true
 	self.simplifiedSkirmishSetup = true
 	self.debugMode = false
-	self.devMode = (VFS.FileExists("devmode.txt") and true) or false
+	self.devMode = VFS.FileExists("devmode.txt") or VFS.FileExists("devmode.txt.txt")
 	self.debugRawMessages = false
 	self.enableProfiler = false
 	self.showPlanetUnlocks = false
@@ -247,6 +247,7 @@ function Configuration:init()
 	self.drawAtFullSpeed = false
 	self.lobbyIdleSleep = false
 	self.rememberQueuesOnStart2 = true
+	self.blockedJoinBattles = false
 	self.channels = {}
 	if self.gameConfig.defaultChatChannels ~= nil then
 		for _, channelName in ipairs(self.gameConfig.defaultChatChannels) do
@@ -296,8 +297,11 @@ function Configuration:init()
 
 	self.AtiIntelSettingsOverride = {
 		AdvSky = 0,
-		UsePBO = 0,
 		VSync = 1,
+		FSAA = 0,
+		MSAALevel = 0,
+		SmoothLines = 0,
+		SmoothPoints = 0,
 	}
 
 	self.countryShortnames = VFS.Include(LUA_DIRNAME .. "configs/countryShortname.lua")
@@ -585,7 +589,7 @@ function Configuration:GetConfigData()
 		animate_lobby = self.animate_lobby,
 		game_settings = self.game_settings,
 		notifyForAllChat = self.notifyForAllChat,
-		planetwarsNotifications = self.planetwarsNotifications,
+		planetwarsNotifications2 = self.planetwarsNotifications2,
 		ingameNotifcations = self.ingameNotifcations,
 		nonFriendNotifications = self.nonFriendNotifications,
 		friendNotifyIngame = self.friendNotifyIngame,
@@ -605,6 +609,7 @@ function Configuration:GetConfigData()
 		drawAtFullSpeed = self.drawAtFullSpeed,
 		lobbyIdleSleep = self.lobbyIdleSleep,
 		rememberQueuesOnStart2 = self.rememberQueuesOnStart2,
+		blockedJoinBattles = self.blockedJoinBattles,
 		queue_handicap = self.queue_handicap,
 		queue_wide = self.queue_wide,
 		loadLocalWidgets = self.loadLocalWidgets,
@@ -802,7 +807,7 @@ function Configuration:GetButtonFont(sizeScale, specialName, specialData, rawSiz
 	specialName = (specialName or "") .. "_button_" .. sizeScale
 	specialData = specialData or {}
 	specialData.outline = true
-	specialData.outlineWidth = 3
+	specialData.outlineWidth = 2
 	specialData.outlineHeight = 3
 	return self:GetFont(sizeScale, specialName, specialData, rawSize)
 end
@@ -892,9 +897,12 @@ function Configuration:GetModoptions(gameName)
         return false
     end
 
-    local function ReadModoptions()
-        return VFS.Include("modoptions.lua", nil, VFS.ZIP)
-    end
+	local function ReadModoptions()
+		if not VFS.FileExists("modoptions.lua", VFS.ZIP) then
+			return false
+		end
+		return VFS.Include("modoptions.lua", nil, VFS.ZIP)
+	end
 
     local alreadyLoaded = false
     for _, archive in pairs(VFS.GetLoadedArchives()) do
