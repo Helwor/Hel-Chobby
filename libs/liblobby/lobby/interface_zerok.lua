@@ -1,8 +1,10 @@
 -- Zero-K Server protocol implementation
 -- https://github.com/ZeroK-RTS/Zero-K-Infrastructure/blob/master/Shared/LobbyClient/Protocol/Messages.cs
-local Echo = Spring.Echo
+
 VFS.Include(LIB_LOBBY_DIRNAME .. "json.lua")
 VFS.Include(LIB_LOBBY_DIRNAME .. "interface_shared.lua")
+
+local Echo = Spring.Echo
 
 -- map lobby commands by name
 Interface.commands = {}
@@ -740,6 +742,7 @@ end
 function Interface:Say(chanName, message)
 	-- Say {"Place":0,"Target":"zk","User":"GoogleFrog","IsEmote":false,"Text":"bla","Ring":false,"Time":"2016-06-25T07:17:20.7548313Z"
 	-- Echo('interface_zerok.lua receive Say',message,os.clock())
+	message = message:gsub('\r',''):gsub('\\n', '\n') -- remove /r provoking error, convert fake \\n to \n for user to write newline by hand
 	local sendData = {
 		Place = 0, -- Does 0 mean say to a channel???
 		Target = chanName,
@@ -755,6 +758,7 @@ end
 
 function Interface:SayEx(chanName, message)
 	-- Say {"Place":0,"Target":"zk","User":"GoogleFrog","IsEmote":false,"Text":"bla","Ring":false,"Time":"2016-06-25T07:17:20.7548313Z"
+	message = message:gsub('\r',''):gsub('\\n', '\n') -- remove /r provoking error, convert litteral "\n" to  nl char \n for user to write newline by hand
 	local sendData = {
 		Place = 0, -- Does 0 mean say to a channel???
 		Target = chanName,
@@ -770,6 +774,7 @@ end
 
 function Interface:SayPrivate(userName, message)
 	-- Say {"Place":0,"Target":"zk","User":"GoogleFrog","IsEmote":false,"Text":"bla","Ring":false,"Time":"2016-06-25T07:17:20.7548313Z"
+	message = message:gsub('\r',''):gsub('\\n', '\n') -- remove /r provoking error, convert litteral "\n" to  nl char \n for user to write newline by hand
 	local sendData = {
 		Place = 2, -- Does 2 mean say to a player???
 		Target = userName,
@@ -784,6 +789,7 @@ function Interface:SayPrivate(userName, message)
 end
 
 function Interface:SayPrivateEx(userName, message)
+	message = message:gsub('\r',''):gsub('\\n', '\n') -- remove /r provoking error, convert litteral "\n" to  nl char \n for user to write newline by hand
 	-- Say {"Place":0,"Target":"zk","User":"GoogleFrog","IsEmote":false,"Text":"bla","Ring":false,"Time":"2016-06-25T07:17:20.7548313Z"
 	local sendData = {
 		Place = 2, -- Does 2 mean say to a player???
