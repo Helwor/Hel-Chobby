@@ -1964,6 +1964,7 @@ local function InitializeControls(battleID, oldLobby, topPoportion, setupData)
 	UpdateBattleTitle()
 
 	local function MessageListener(message)
+		message = message:gsub('\r', ''):gsub('\\n', '\n')
 		if message:starts("/me ") then
 			battleLobby:SayBattleEx(message:sub(5))
 		else
