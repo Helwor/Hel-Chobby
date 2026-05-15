@@ -6,11 +6,12 @@ QUICK GUIDE
 
 The moded chobby is contained in the 2 directories libs and LuaMenu, and must be placed in the root of the installation of ZK.
 
+Use Update Script (Hel-Chobby_Update.bat or Hel-Chobby_Update.sh for Linux) to be placed in ZK Install Dir for easy installation and update.
+
 To enable the mod, user need to modify the file LuaMenu\Config\IGL_data.lua.
 
-In the subtable "Chili lobby", set loadLocalWidgets = true, (make the line if it doesn't exist).
+In the subtable "Chili lobby", set loadLocalWidgets = true, (make the line if you're certain it doesn't exist).
 
-Use Update Script to be placed in ZK Install Dir for easy installation and update.
 
 Implemented so far:
 
