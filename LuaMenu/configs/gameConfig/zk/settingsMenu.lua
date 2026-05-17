@@ -647,13 +647,13 @@ local settingsConfig = {
 				name = "MaxTextureAtlasSize",
 				humanName = "Texture Atlas size",
 				options = {
-					{
-						name="512",
-						apply = {
-							MaxTextureAtlasSizeX = 512,
-							MaxTextureAtlasSizeY = 512,
-						}
-					},
+					-- { -- 512 IS TOO FEW TO FIT PROJECTILE TEXTURE
+					-- 	name="512",
+					-- 	apply = {
+					-- 		MaxTextureAtlasSizeX = 512,
+					-- 		MaxTextureAtlasSizeY = 512,
+					-- 	}
+					-- },
 					{
 						name="1024",
 						apply = {
@@ -789,25 +789,25 @@ local settingsConfig = {
 			-- 		},
 			-- 	},
 			-- },
-			{
-				name = "BuildIconsFirst",
-				humanName = "Build Icons First",
-				options = {
-					{
-						name = "Off (Default)",
-						apply = {
-							BuildIconsFirst = 0
+			-- {
+			-- 	name = "BuildIconsFirst",
+			-- 	humanName = "Build Icons First",
+			-- 	options = {
+			-- 		{
+			-- 			name = "Off (Default)",
+			-- 			apply = {
+			-- 				BuildIconsFirst = 0
 
-						}
-					},
-					{
-						name = "On",
-						apply = {
-							BuildIconsFirst = 1
-						}
-					},
-				},
-			},
+			-- 			}
+			-- 		},
+			-- 		{
+			-- 			name = "On",
+			-- 			apply = {
+			-- 				BuildIconsFirst = 1
+			-- 			}
+			-- 		},
+			-- 	},
+			-- },
 			{
 				name = "ColorElev",
 				humanName = "Colored Height Map",
@@ -1384,6 +1384,7 @@ local settingsConfig = {
 						apply = {
 							CubeTexSizeReflection = 1,
 							CubeTexSizeSpecular = 1,
+							CubeTexGenerateMipMaps = 1,
 						}
 					},
 					{
@@ -1391,6 +1392,7 @@ local settingsConfig = {
 						apply = {
 							CubeTexSizeReflection = 64,
 							CubeTexSizeSpecular = 64,
+							CubeTexGenerateMipMaps = 1,
 						}
 					},
 					{
@@ -1398,6 +1400,7 @@ local settingsConfig = {
 						apply = {
 							CubeTexSizeReflection = 128,
 							CubeTexSizeSpecular = 128,
+							CubeTexGenerateMipMaps = 1,
 						}
 					},
 					{
@@ -1405,6 +1408,7 @@ local settingsConfig = {
 						apply = {
 							CubeTexSizeReflection = 256,
 							CubeTexSizeSpecular = 256,
+							CubeTexGenerateMipMaps = 1,
 						}
 					},
 					{
@@ -1412,6 +1416,7 @@ local settingsConfig = {
 						apply = {
 							CubeTexSizeReflection = 1024,
 							CubeTexSizeSpecular = 1024,
+							CubeTexGenerateMipMaps = 1,
 						}
 					},
 				},
@@ -2492,7 +2497,7 @@ local settingsDefault = {
 	MaxDynamicModelLights = 1,
 	SetCoreAffinity = 0,
 	-- CompressTextures = "Off (Default)", -- CAUSE FBO ATLAS ERROR SPAM SINCE LAST ENGINE
-	BuildIconsFirst = "Off (Default)",
+	-- BuildIconsFirst = "Off (Default)",
 	MiniMapCanFlip = "Off (Default)",
 	AllowDrawMapPostDeferredEvents = "Off (Default)",
 	AllowDrawMapDeferredEvents = "Off (Default)",
