@@ -974,6 +974,30 @@ local settingsConfig = {
 				},
 			},
 			{
+				name = "VSync",
+				humanName = "Frame Rate Limit (vsync)",
+				options = {
+					{
+						name = "Standard",
+						apply = {
+							VSync = 1,
+						}
+					},
+					{
+						name = "Adaptive",
+						apply = {
+							VSync = -1,
+						}
+					},
+					{
+						name = "Off",
+						apply = {
+							VSync = 0,
+						}
+					},
+				},
+			},
+			{
 				name = "ParticleLimit",
 				humanName = "Particle Limit",
 				options = {
@@ -1477,31 +1501,6 @@ local settingsConfig = {
 					},
 				},
 			},
-			{
-				name = "VSync",
-				humanName = "Vertical Sync",
-				options = {
-					{
-						name = "Standard",
-						apply = {
-							VSync = 1,
-						}
-					},
-					{
-						name = "Adaptive",
-						apply = {
-							VSync = -1,
-						}
-					},
-					{
-						name = "Off",
-						apply = {
-							VSync = 0,
-						}
-					},
-				},
-			},
-
 			{
 				name = "WaterType",
 				humanName = "Water Type",
@@ -2312,31 +2311,31 @@ local settingsConfig = {
 					{
 						name = "Higher performance",
 						apply = {
-							LuaGarbageCollectionMemLoadMult = 1.7,
+							LuaGarbageCollectionMemLoadMult = 2.4,
 						}
 					},
 					{
 						name = "More performance",
 						apply = {
-							LuaGarbageCollectionMemLoadMult = 2.4,
+							LuaGarbageCollectionMemLoadMult = 3.2,
 						}
 					},
 					{
 						name = "Recommended",
 						apply = {
-							LuaGarbageCollectionMemLoadMult = 3.2,
+							LuaGarbageCollectionMemLoadMult = 4.5,
 						}
 					},
 					{
 						name = "More Stability",
 						apply = {
-							LuaGarbageCollectionMemLoadMult = 4,
+							LuaGarbageCollectionMemLoadMult = 6,
 						}
 					},
 					{
 						name = "Higher Stability",
 						apply = {
-							LuaGarbageCollectionMemLoadMult = 6,
+							LuaGarbageCollectionMemLoadMult = 8,
 						}
 					},
 					{
@@ -2354,37 +2353,37 @@ local settingsConfig = {
 					{
 						name = "Highest performance",
 						apply = {
-							LuaGarbageCollectionRunTimeMult = 1,
+							LuaGarbageCollectionRunTimeMult = 1.4,
 						}
 					},
 					{
 						name = "Higher Performance",
 						apply = {
-							LuaGarbageCollectionRunTimeMult = 1.4,
+							LuaGarbageCollectionRunTimeMult = 1.7,
 						}
 					},
 					{
 						name = "More Performance",
 						apply = {
-							LuaGarbageCollectionRunTimeMult = 1.7,
+							LuaGarbageCollectionRunTimeMult = 2,
 						}
 					},
 					{
 						name = "Recommended",
 						apply = {
-							LuaGarbageCollectionRunTimeMult = 2,
+							LuaGarbageCollectionRunTimeMult = 3,
 						}
 					},
 					{
 						name = "More Stability",
 						apply = {
-							LuaGarbageCollectionRunTimeMult = 3,
+							LuaGarbageCollectionRunTimeMult = 4,
 						}
 					},
 					{
 						name = "Higher Stability",
 						apply = {
-							LuaGarbageCollectionRunTimeMult = 4,
+							LuaGarbageCollectionRunTimeMult = 5,
 						}
 					},
 					{
