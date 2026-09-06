@@ -1,17 +1,17 @@
 
 function widget:GetInfo()
-    return {
-        name      = "Message From Game",
-        desc      = "",
-        author    = "Helwor",
-        date      = "June 2024",
-        license   = "GNU GPL, v2 or later",
-        layer     = 10e38,
-        -- layer     = 2,
-        enabled   = true,  --  loaded by default?
-        api       = true,
-        handler   = true,
-    }
+	return {
+		name      = "Message From Game",
+		desc      = "",
+		author    = "Helwor",
+		date      = "June 2024",
+		license   = "GNU GPL, v2 or later",
+		layer     = 10e38,
+		-- layer     = 2,
+		enabled   = true,  --  loaded by default?
+		api       = true,
+		handler   = true,
+	}
 end
 -- if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
 --     Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
@@ -26,278 +26,315 @@ local lobby, server, Conf
 local host = "127.0.0.1"
 local port = VFS.LoadFile("chobby_wrapper_port.txt")
 if not port then
-    Echo(widget:GetInfo().name .. " don't have any port set")
-    return false
+	Echo(widget:GetInfo().name .. " don't have any port set")
+	return false
 end
 port = port + 1
-LIB_LOBBY_DIRNAME = "libs/liblobby/lobby/" -- why is this needed? why doesnt api load first?
+LIB_LOBBY_DIRNAME = "libs/liblobby/lobby/" 
 VFS.Include(LIB_LOBBY_DIRNAME .. "json.lua")
 if not json then
-    Echo(sig .. 'wrong include dir: ' .. LIB_LOBBY_DIRNAME .. "json.lua")
-    return false
+	Echo(sig .. 'wrong include dir: ' .. LIB_LOBBY_DIRNAME .. "json.lua")
+	return false
 end
 local server_t, cli_t = {}, {}
 function widget:Initialize()
-    server = socket.tcp()
-    server:settimeout(0.1)
-    local success, err = server:bind(host, port)
-    if not success then
-        Echo(sig .. err)
-        widgetHandler:RemoveWidget(widget)
-        return
-    end
-    local success, err = server:listen(5) -- maximum connections allowed
-    if not success then
-        Echo(sig .. err)
-        widgetHandler:RemoveWidget(widget)
-        return
-    end
-    server:settimeout(0)
-    server_t[1] = server
+	server = socket.tcp()
+	server:settimeout(0.1)
+	local success, err = server:bind(host, port)
+	if not success then
+		Echo(sig .. err)
+		widgetHandler:RemoveWidget(widget)
+		return
+	end
+	local success, err = server:listen(5) -- maximum connections allowed
+	if not success then
+		Echo(sig .. err)
+		widgetHandler:RemoveWidget(widget)
+		return
+	end
+	server:settimeout(0)
+	server_t[1] = server
 end
 local function GetAllUsers() -- indexed, for keyed => WG.LibLobby.lobby:GetUsers()
-    local chatWindow = WG.Chobby.interfaceRoot.GetChatWindow()
-    if chatWindow then
-        local userListPanels = chatWindow.userListPanels
-        if userListPanels then
-            if userListPanels.zk then
-                return userListPanels.zk:GetUsers()
-            end
-        end
-    end
+	local chatWindow = WG.Chobby.interfaceRoot.GetChatWindow()
+	if chatWindow then
+		local userListPanels = chatWindow.userListPanels
+		if userListPanels then
+			if userListPanels.zk then
+				return userListPanels.zk:GetUsers()
+			end
+		end
+	end
 end
 local function AutoComplete(subword)
-    if subword:len() == 0 then
-        return false, subword
-    end
-    local lobby = WG.LibLobby.lobby
-    local users = lobby:GetUsers()
-    if not users[subword] then
-        local lowersubword = subword:lower()
-        if users[lowersubword] then
-            return true, lowersubword
-        else
-            for name in pairs(users) do
-                local lowername = name:lower()
-                if lowername:find('^' .. lowersubword) then
-                    return true, name
-                end
-            end
-        end
-    end
-    return false, subword
+	if subword:len() == 0 then
+		return false, subword
+	end
+	local lobby = WG.LibLobby.lobby
+	local users = lobby:GetUsers()
+	if not users[subword] then
+		local lowersubword = subword:lower()
+		if users[lowersubword] then
+			return true, lowersubword
+		else
+			for name in pairs(users) do
+				local lowername = name:lower()
+				if lowername:find('^' .. lowersubword) then
+					return true, name
+				end
+			end
+		end
+	end
+	return false, subword
 end
 
 -- function widget:RecvLuaMsg(msg)
 --     Echo("RecvLuaMsg msg is ", msg)
 -- end
 local nextword = function(str,n)
-    local count = 0
-    for word in str:gmatch('[%w_]+') do
-        count = count + 1
-        if count == (n or 2) then
-            return word
-        end
-    end
+	local count = 0
+	for word in str:gmatch('[%w_]+') do
+		count = count + 1
+		if count == (n or 2) then
+			return word
+		end
+	end
 end
 local sentence = function(str, n) -- gather rest of line starting by a word; after n word, omitting blanks and newlines at end
-    local st, fin = 1, 0
-    local count = 0
-    while st and (n or 0) >= count do
-        st, fin = str:find('%S+', fin+1)
-        count = count + 1
-    end
-    if st then
-        fin = str:find('%s+$')
-        return str:sub(st, (fin or 0) - 1)
-        -- return str:sub(fin+2):match('(%S[^\n\r]+)')
-    end
+	local st, fin = 1, 0
+	local count = 0
+	while st and (n or 0) >= count do
+		st, fin = str:find('%S+', fin+1)
+		count = count + 1
+	end
+	if st then
+		fin = str:find('%s+$')
+		return str:sub(st, (fin or 0) - 1)
+		-- return str:sub(fin+2):match('(%S[^\n\r]+)')
+	end
 end
+local function GetTimeDeltaFromUTC_OLD(utc) -- os.time() has too bad precision at 128 seconds
+	local y, mo, d, h, mi, s, frac = utc:match("(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)%.(%d+)Z")
+	y, mo, d, h, mi, s = tonumber(y), tonumber(mo), tonumber(d), tonumber(h), tonumber(mi), tonumber(s)
+	local nowUTC = os.time(os.date("!*t", os.time()))
+	local epochUTC = os.time({isdst=false, year=y, month=mo, day=d, hour=h, min=mi, sec=s})
+	return nowUTC - epochUTC
+end
+
+local function daysFromCivil(y, m, d) -- Howard Hinnant algorythm to replace os.time()
+	local floor = math.floor
+	y = (m <= 2) and (y - 1) or y
+	local era = floor((y >= 0 and y or (y - 399)) / 400)
+	local yoe = y - era * 400
+	local doy = floor((153 * (m + (m > 2 and -3 or 9)) + 2) / 5 + d - 1)
+	local doe = floor(floor(yoe * 365 + yoe / 4 - yoe) / 100 + doy)
+	return era * 146097 + doe - 719468
+end
+
+local function GetTimeDeltaFromUTC(utc)
+	local nowUTC = os.date("!*t")
+	local y,mo,d,h,mi,s = utc:match("(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
+	local dayDelta = daysFromCivil(nowUTC.year,nowUTC.month,nowUTC.day) - daysFromCivil(tonumber(y),tonumber(mo),tonumber(d))
+	local secNow = tonumber(nowUTC.hour)*3600 + tonumber(nowUTC.min)*60 + tonumber(nowUTC.sec)
+	local secOfDay = tonumber(h)*3600 + tonumber(mi)*60 + tonumber(s)
+	return dayDelta * 86400 + (secNow - secOfDay)
+end
+
 function string.explode(str, div)
 if (div=='') then return false end
 local pos,arr = 0,{}
 -- for each divider found
 for st,sp in function() return string.find(str,div,pos,true) end do
-    table.insert(arr,string.sub(str,pos,st-1)) -- Attach chars left of current divider
-    pos = sp + 1 -- Jump past current divider
+	table.insert(arr,string.sub(str,pos,st-1)) -- Attach chars left of current divider
+	pos = sp + 1 -- Jump past current divider
 end
 table.insert(arr,string.sub(str,pos)) -- Attach chars right of last divider
 return arr
 end
 
 local function ReceiveMessage(msg, cli, writeable) -- WE CAN ASLO DISCUSS THROUGH Spring.SendLuaMenuMsg <=> Spring.SendLuaUIMsg
-    if not lobby then
-        lobby = WG.LibLobby and WG.LibLobby.lobby --(lobby is interface_shared + interface_zerok see api_lobby.lua)
-    end
-    msg = msg and msg:gsub('%s+$', '')
-    if msg:find('^tell ') then
-        local key = sentence(msg, 1)
+	if not lobby then
+		lobby = WG.LibLobby and WG.LibLobby.lobby --(lobby is interface_shared + interface_zerok see api_lobby.lua)
+	end
+	msg = msg and msg:gsub('%s+$', '')
+	if msg:find('^tell ') then
+		local key = sentence(msg, 1)
 
-        key = tostring(key)
-        local value
-        if key:find('.') then
-            local keys = key:explode('.')
-        
+		key = tostring(key)
+		local value
+		if key:find('.') then
+			local keys = key:explode('.')
+		
 
-            value = lobby
-            for i, k in ipairs(keys) do
-                k = tonumber(k) or k
-                if type(value[k]) == 'table' then
-                    value = value[k]
-                elseif not keys[i+1] then
-                    value = tostring(value[k])
-                else
-                    value = 'wrong type for key ' .. k .. ' : ' .. type(value[k])
-                    break
-                end
-            end
-        else
-            key = tonumber(key) or key
-            value = lobby[key]
-        end
+			value = lobby
+			for i, k in ipairs(keys) do
+				k = tonumber(k) or k
+				if type(value[k]) == 'table' then
+					value = value[k]
+				elseif not keys[i+1] then
+					value = tostring(value[k])
+				else
+					value = 'wrong type for key ' .. k .. ' : ' .. type(value[k])
+					break
+				end
+			end
+		else
+			key = tonumber(key) or key
+			value = lobby[key]
+		end
 
-        if type(value) == 'table' then
-            value = tostring(value) .. ' #' .. table.size(value)
-        else
-            value = tostring(value)
-        end
-        Echo('Tell ' .. key, value)
-        WG.Chotify:Post{
-            title = 'Tell ' .. key,
-            body = value,
-            time = 15,
-        }
-        return
-    elseif msg:find('^r ') then
-        if writeable then
-            cli:send(lobby.lastPMUser or '')
-        else
-            Echo('there was a problem, the client proxy is not writeable',cli)
-        end
-        return
-    elseif msg:find('^join ') then
-        -- JoinChannel {"ChannelName":"clan_ELOKR"}
-        local channelName = sentence(msg,1)
-        if channelName then
-            lobby:Join(channelName)
-        end
-        return
-    elseif msg:find('^reload api') then
-        widgetHandler:RemoveWidget(widget)
-        widgetHandler:EnableWidget(widget:GetInfo().name)
-        return
-    elseif msg:find('^reload lobby ') then
-        local name = sentence(msg,2)
-        -- widgetHandler is actually luaHandler in Chobby
-        if name then
-            local w = widgetHandler:FindByName(name)
-            if not w then
-                for k,v in widgetHandler.widgets:iter() do
-                    if v.GetInfo().name == name then
-                        Echo('warn, this is an api widget', name)
-                        w = v
-                        break
-                    end
-                end
-            end
-            if w then
-                Echo('reloading widget ' .. name)
-                widgetHandler:RemoveWidget(w)
-                widgetHandler:EnableWidget(name)
-            else
-                Echo('widget ' .. name .. ' not found')
-            end
-        end
-        return
-    elseif msg:find('^open ') then
-        local room = msg:sub(6)
-        if room:len() > 0 then
-            Echo('Private chat', room,room:len(), os.clock())
-            WG.Chobby.interfaceRoot.OpenPrivateChat(room)
-        end
-        return
-    elseif msg:find('^pm ') then
-        local userName, message = nextword(msg,2), sentence(msg,2)
-        if userName and message then
-            local changed, newTarget = AutoComplete(userName)
-            if changed then
-                Echo('target autocompleted: ' .. newTarget)
-                userName = newTarget
-            end
-            if message:find('^/me ') then
-                lobby:SayPrivateEx(userName, message:sub(4))
-            else
-                lobby:SayPrivate(userName, message)
-            end
-        end
+		if type(value) == 'table' then
+			value = tostring(value) .. ' #' .. table.size(value)
+		else
+			value = tostring(value)
+		end
+		Echo('Tell ' .. key, value)
+		WG.Chotify:Post{
+			title = 'Tell ' .. key,
+			body = value,
+			time = 15,
+		}
+		return
+	elseif msg:find('^r ') then
+		if writeable then
+			cli:send(lobby.lastPMUser or '')
+		else
+			Echo('there was a problem, the client proxy is not writeable',cli)
+		end
+		return
+	elseif msg:find('^join ') then
+		-- JoinChannel {"ChannelName":"clan_ELOKR"}
+		local channelName = sentence(msg,1)
+		if channelName then
+			lobby:Join(channelName)
+		end
+		return
+	elseif msg:find('^reload api') then
+		widgetHandler:RemoveWidget(widget)
+		widgetHandler:EnableWidget(widget:GetInfo().name)
+		return
+	elseif msg:find('^reload lobby ') then
+		local name = sentence(msg,2)
+		-- widgetHandler is actually luaHandler in Chobby
+		if name then
+			local w = widgetHandler:FindByName(name)
+			if not w then
+				for k,v in widgetHandler.widgets:iter() do
+					if v.GetInfo().name == name then
+						Echo('warn, this is an api widget', name)
+						w = v
+						break
+					end
+				end
+			end
+			if w then
+				Echo('reloading widget ' .. name)
+				widgetHandler:RemoveWidget(w)
+				widgetHandler:EnableWidget(name)
+			else
+				Echo('widget ' .. name .. ' not found')
+			end
+		end
+		return
+	elseif msg:find('^open ') then
+		local room = msg:sub(6)
+		if room:len() > 0 then
+			Echo('Private chat', room,room:len(), os.clock())
+			WG.Chobby.interfaceRoot.OpenPrivateChat(room)
+		end
+		return
+	elseif msg:find('^pm ') then
+		local userName, message = nextword(msg,2), sentence(msg,2)
+		if userName and message then
+			local changed, newTarget = AutoComplete(userName)
+			if changed then
+				Echo('target autocompleted: ' .. newTarget)
+				userName = newTarget
+			end
+			if message:find('^/me ') then
+				lobby:SayPrivateEx(userName, message:sub(4))
+			else
+				lobby:SayPrivate(userName, message)
+			end
+		end
+	elseif msg:find('^reload spring') then
+		Spring.Reload('')
+	-- elseif msg:find('^Say ') then
+	--     local target = msg:match('\"Target\":\"([%w_]+)')
+	--     if target then
+	--         local changed, newtarget = AutoComplete(target)
+	--         if changed then
+	--             msg = msg:gsub('(\"Target\":\")([%w_]+)','%1' .. newtarget)
+	--         end
+	--     end
+	--     lobby:_SendCommand(msg)
+	elseif msg:find('^getrunningsince') then
+		local myBattleID = lobby:GetMyBattleID()
+		if myBattleID then
+			local battle = lobby:GetBattle(myBattleID)
+			if battle and battle.runningSince then
+				local delta = GetTimeDeltaFromUTC(battle.runningSince)
+				Spring.SendLuaUIMsg('gamerunningsince_'..delta)
+			end
+		end
+	else
+		WG.Chotify:Post{
+			title = '',
+			body = 'Unrecognized command ' .. msg .. ',\n' .. 'reloading '..widget:GetInfo().name..' just in case.',
+			time = 3,
+		}
+		Echo('reloading Menu widget '..widget:GetInfo().name..' just in case')
+		widgetHandler:RemoveWidget(widget)
+		widgetHandler:EnableWidget(widget:GetInfo().name)
 
-    -- elseif msg:find('^Say ') then
-    --     local target = msg:match('\"Target\":\"([%w_]+)')
-    --     if target then
-    --         local changed, newtarget = AutoComplete(target)
-    --         if changed then
-    --             msg = msg:gsub('(\"Target\":\")([%w_]+)','%1' .. newtarget)
-    --         end
-    --     end
-    --     lobby:_SendCommand(msg)
-    else
-        WG.Chotify:Post{
-            title = '',
-            body = 'Unrecognized command ' .. msg .. ',\n' .. 'reloading just in case.',
-            time = 3,
-        }
-        Echo('reloading just in case')
-        widgetHandler:RemoveWidget(widget)
-        widgetHandler:EnableWidget(widget:GetInfo().name)
-
-    end
-    -- cli:send('OK\n')
+	end
+	-- cli:send('OK\n')
 end
 WG.UserCommand = ReceiveMessage
 
 function widget:Update()
-    if not cli then
-        local readable , _, err = socket.select(server_t, nil, 0)
-        if err == 'timeout' then
-            return
-        elseif not err then
-            if readable and readable[server] then
-                cli = server:accept()
-                Echo('new client connected', cli)
-                cli_t[1] = cli
-            end
-        end
-    end
-    if cli then
-        local readable , writeable, err = socket.select(cli_t, cli_t, 0)
-        if err then
-            if err=="timeout" then
-                return
-            end
-            Echo(sig .. "Error in select: " .. err)
-            return
-        end
+	if not cli then
+		local readable , _, err = socket.select(server_t, nil, 0)
+		if err == 'timeout' then
+			return
+		elseif not err then
+			if readable and readable[server] then
+				cli = server:accept()
+				Echo('new client connected', cli)
+				cli_t[1] = cli
+			end
+		end
+	end
+	if cli then
+		local readable , writeable, err = socket.select(cli_t, cli_t, 0)
+		if err then
+			if err=="timeout" then
+				return
+			end
+			Echo(sig .. "Error in select: " .. err)
+			return
+		end
 
-        if readable[cli] then
-            local s, status, partial = cli:receive() 
-            if status == "timeout" or status == nil then
-                ReceiveMessage(s or partial, cli, writeable[cli])
-            elseif status == "closed" then
-                Echo('client closed', cli)
-                cli:close()
-                cli_t[1] = nil
-                cli = nil
-                return
-            end
-        end
-    end
+		if readable[cli] then
+			local s, status, partial = cli:receive() 
+			if status == "timeout" or status == nil then
+				ReceiveMessage(s or partial, cli, writeable[cli])
+			elseif status == "closed" then
+				Echo('client closed', cli)
+				cli:close()
+				cli_t[1] = nil
+				cli = nil
+				return
+			end
+		end
+	end
 end
 function widget:Shutdown()
-    if server then
-        server:close()
-        server = nil
-    end
-    if cli then
-        cli:close()
-    end
+	if server then
+		server:close()
+		server = nil
+	end
+	if cli then
+		cli:close()
+	end
 end
