@@ -13,11 +13,11 @@ function widget:GetInfo()
 		enabled   = true,
 	}
 end
-if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
-    Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
-	WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
-    return false
-end
+-- if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
+--     Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
+-- 	WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
+--     return false
+-- end
 local Echo = Spring.Echo
 
 --------------------------------------------------------------------------------
@@ -734,6 +734,7 @@ local function OnBattleIngameUpdate(self, battleID, started)
 	end
 	local vs
 	if conf.notifyStartedHigh1v1 then
+		local minElo = 0
 		if battle.playerCount == 2 then
 			if battle.isMatchMaker and title:find(': 1v1') then
 				if (title:find('Singularity') or title:find('Neutron Star')) then
@@ -750,18 +751,23 @@ local function OnBattleIngameUpdate(self, battleID, started)
 					local p1, p2
 					if isSpec == false then
 						-- vs = (vs or '') .. name ..', '
-						if user.casualSkill > 2500 or user.skill > 2500 then
+						-- if user.casualSkill > 2500 or user.skill > 2500 then
 							if not p1 then
 								p1 = name
 							elseif not p2 then
 								p2 = name
 								break
 							end
-						end
+						-- end
 					end
 				end
-				if p2 then
-					vs = p1 .. ' vs ' .. p2
+				if p1 then
+					local user1, user2 = lobby.users[p1], p2 and lobby.users[p2]
+					if user1.casualSkill > minElo or user1.skill > minElo
+						or user2 and (user2.casualSkill > minElo or user2.skill > minElo)
+					then
+						vs = p1 .. ' vs ' .. (p2 or '???')
+					end
 				end
 			end
 		end
@@ -952,6 +958,7 @@ function widget:ActivateGame()
 	INGAME = true
 	INMENU = false
 end
+
 function table.size(t)
 	local count = 0
 	for _ in pairs(t) do
@@ -969,7 +976,7 @@ function widget:KeyPress(key, mods, isRepeat)
 		return
 	end
 	if mods.ctrl and mods.alt and key == HKEY then --
-		Echo('RELOADING')
+		Echo('Reloading '..widget.GetInfo().name..' (Ctrl + Alt + H)')
         widgetHandler:RemoveWidget(widget)
         widgetHandler:EnableWidget(widget:GetInfo().name)
 
