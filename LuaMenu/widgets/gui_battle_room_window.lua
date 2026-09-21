@@ -12,11 +12,11 @@ function widget:GetInfo()
 		enabled   = true  --  loaded by default?
 	}
 end
-if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
-    Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
-	WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
-    return false
-end
+-- if not WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] then
+--     Spring.Echo('Avoiding duplicate load of local widget: ' .. widget:GetInfo().name)
+-- 	WG['avoidDuplicateWidgetLoad'..widget:GetInfo().name] = true
+--     return false
+-- end
 
 local Echo = Spring.Echo
 
