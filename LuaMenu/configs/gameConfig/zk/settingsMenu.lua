@@ -617,7 +617,7 @@ local settingsConfig = {
 
 			{
 				name = "UnitGhostIconsDimming",
-				humanName = "Ghost Building Alpha",
+				humanName = "Ghost Building Icon Dimming",
 				isNumberSetting = true,
 				isSliderSetting = true,
 				minValue = 0,
@@ -2278,6 +2278,16 @@ local settingsConfig = {
 							LinkIncomingMaxPacketRate = 2048,
 						}
 					},
+					-- {
+					-- 	name = "Maison",
+					-- 	apply = {
+					-- 		NetworkLossFactor = 0, -- big impact on packet tolerance, don't up it
+					-- 		LinkOutgoingBandwidth = -90000, -- neg value for no limit, low value can slow down artificially number of packet sent and lag you down
+					-- 		LinkIncomingSustainedBandwidth = 400000, -- useless as player
+					-- 		LinkIncomingPeakBandwidth = 500000, -- useless as player
+					-- 		LinkIncomingMaxPacketRate = 512, -- useless as player
+					-- 	}
+					-- },
 				},
 			},
 			{
