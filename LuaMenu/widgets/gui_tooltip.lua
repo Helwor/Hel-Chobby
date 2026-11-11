@@ -759,7 +759,7 @@ local function GetUserTooltip(userName, userInfo, userBattleInfo, inBattleroom)
 	end
 
 	-- elo
-	if userInfo.skill or user.casualSkill then
+	if userInfo.skill or userInfo.casualSkill then
 		if not userTooltip.skill then
 			userTooltip.skill = GetTooltipLine(userTooltip.mainControl, true)
 		end
