@@ -19,7 +19,7 @@ end
 --     return false
 -- end
 local Echo = Spring.Echo
-
+local debugging = false
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -969,17 +969,18 @@ end
 local round = 0
 
 ---
+if debugging then
+	local HKEY = 104
+	function widget:KeyPress(key, mods, isRepeat)
+		if isRepeat then
+			return
+		end
+		if mods.ctrl and mods.alt and key == HKEY then --
+			Echo('Reloading '..widget.GetInfo().name..' (Ctrl + Alt + H)')
+			widgetHandler:RemoveWidget(widget)
+			widgetHandler:EnableWidget(widget:GetInfo().name)
 
-local HKEY = 104
-function widget:KeyPress(key, mods, isRepeat)
-	if isRepeat then
-		return
-	end
-	if mods.ctrl and mods.alt and key == HKEY then --
-		Echo('Reloading '..widget.GetInfo().name..' (Ctrl + Alt + H)')
-        widgetHandler:RemoveWidget(widget)
-        widgetHandler:EnableWidget(widget:GetInfo().name)
-
+		end
 	end
 end
 ---
