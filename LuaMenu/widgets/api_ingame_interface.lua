@@ -37,6 +37,16 @@ local Chobby
 local spectators = {}
 
 local INGAME, INMENU = false, false
+
+
+function table.size(t)
+	local count = 0
+	for _ in pairs(t) do
+		count = count + 1
+	end
+	return count
+end
+
 -- Externals Functions
 
 local externalFunctions = {}
@@ -707,6 +717,21 @@ local function GetOpponents(battleID, myBattleID, myBattle, ImSpec)
 	end
 end
 
+local function OnCommandSent(self, command)
+	if command:find('RequestConnectSpring') then
+		local battleID = tonumber(command:match('"BattleID":(%d+)'))
+		local battle = battleID and lobby:GetBattle(battleID)
+		if not battle then
+			Echo('RequestConnectSpring to a non existant battle', battleID, 'command', command)
+		else
+			lobby:_OnUpdateUserStatus(lobby:GetMyUserName(), {inBattle = battleID})
+		end
+	elseif command:find('^ChangeUserStatus') then
+		if command:match('"IsInGame":(false)') then
+			lobby:_OnUpdateUserStatus(lobby:GetMyUserName(), {inBattle = false})
+		end
+	end
+end
 
 local function OnBattleIngameUpdate(self, battleID, started)
 	if not started then
@@ -715,15 +740,16 @@ local function OnBattleIngameUpdate(self, battleID, started)
 	if not conf then
 		return
 	end
+	local battle = lobby.battles[battleID]
+	local myBattleID = lobby:GetMyBattleID()
+	if myBattleID == battleID then
+		lobby:_OnUpdateUserStatus(lobby:GetMyUserName(), {inBattle = battleID})
+		return
+	end
 	if not (conf.notifyStartedHigh1v1 or conf.notifyAnyStarted) then
 		return
 	end
-	local myBattleID = lobby:GetMyBattleID()
-	if myBattleID == battleID then
-		return
-	end
-	local battle = lobby.battles[battleID]
-	if not (battle or battle.passworded) then
+	if not battle or battle.passworded then
 		return
 	end
 	local title = battle.title
@@ -734,7 +760,7 @@ local function OnBattleIngameUpdate(self, battleID, started)
 	end
 	local vs
 	if conf.notifyStartedHigh1v1 then
-		local minElo = 0
+		local minElo = 2400
 		if battle.playerCount == 2 then
 			if battle.isMatchMaker and title:find(': 1v1') then
 				if (title:find('Singularity') or title:find('Neutron Star')) then
@@ -868,8 +894,61 @@ local function BeforeCommandSent(_, command)
 	end
 end
 
-local function OnCommandReceived(_, command)
+local function OnUpdateUserStatus(_, name, status, old)
+	local changed = {}
+	local user = lobby.users[name]
+	for k, v in pairs(status) do
+		v = user[k] -- better use user than status bc some value are niled, but status got a false instead
+		if old[k] ~= v then
+			if type(old[k]) == 'table' and type(v) == 'table' then
+				local old, new = old[k], v
+				local parent_k = k
+				for k, v in pairs(new) do
+					if old[k] ~= v then
+						if not changed[parent_k] then
+							changed[parent_k] = {}
+						end
+						changed[parent_k][k] = true
+						if debugging then
+							Echo('['..name..']['..parent_k..']['..k..'] ' .. tostring(old[k]) .. ' => ' .. tostring(v))
+						end
+					end
+				end
+			else
+				if debugging then
+					changed[k] = true
+					Echo('['..name..']['..k..'] ' .. tostring(old[k]) .. ' => ' .. tostring(v))
+				end
+			end
+		end
+	end
+	if changed.isAway then
+		Spring.SendLuaUIMsg('afk_changed ' .. name .. ' '.. (changed.isAway and '1' or '0'))
+	end
 
+end
+
+local function BeforeOnCommandReceived(_, command)
+	Echo('BEFORE COMMAND', command:sub(1, 50))
+	-- if command:find('^User ') then
+	-- 	if command:find('"IsAway":') and command:find('"Name":') then
+	-- 		local isAfk, name = not not command:match('"IsAway":(true)'), command:match('"Name":"([^"]+)"')
+	-- 		local user = lobby.users[name]
+	-- 		if user then
+	-- 			Echo(name .. ' afk check user:'.. tostring(user.isAway), 'new: ' .. tostring(isAfk))
+	-- 		end
+	-- 		if user and user.isAway ~= isAfk then
+	-- 			Spring.SendLuaUIMsg('afkchanged ' .. name .. ' '.. (isAfk and '1' or '0'))
+	-- 		end
+	-- 	end
+	-- end
+end
+
+local function OnCommandReceived(_, command)
+	-- if command:find('^UpdateUserBattleStatus') or command:find('^User ') then
+	-- 	-- Echo('Received command', command)
+	-- 	Spring.SendLuaUIMsg('CommandReceived_' .. command)
+	-- end
 	if command:find('^Say ') and command:find('"Place":1') then
 		if ShouldSendLobbyUpdatesIngame() then
 			if Spring.SendLuaUIMsg then
@@ -885,7 +964,7 @@ local function OnCommandReceived(_, command)
 end
 
 local function OnCommandBuffered(_, cmdName, command, argumentsPos)
-	Echo('ON COMMAND BUFFERED', cmdName, command) -- it never happen because the buffer has been made impossible to act
+	-- Echo('ON COMMAND BUFFERED', cmdName, command) -- it never happen because the buffer has been made impossible to act
 	if not ShouldSendLobbyUpdatesIngame() then
 		return
 	end
@@ -896,6 +975,10 @@ local function OnCommandBuffered(_, cmdName, command, argumentsPos)
 	if cmdName == "Say" then
 		HandleLobbySay(command, argumentsPos)
 	end
+end
+
+local function OnBattleStartMultiplayer(_, cmdName, command, argumentsPos)
+	Echo("_:"..tostring(_)..", cmdName:"..tostring(cmdName)..", command:"..tostring(command)..", argumentsPos:"..tostring(argumentsPos))
 end
 
 --------------------------------------------------------------------------------
@@ -959,13 +1042,7 @@ function widget:ActivateGame()
 	INMENU = false
 end
 
-function table.size(t)
-	local count = 0
-	for _ in pairs(t) do
-		count = count + 1
-	end
-	return count
-end
+
 local round = 0
 
 ---
@@ -1037,10 +1114,12 @@ local listeners = {
 
 	-- OnBattleAboutToStart = OnBattleStartMultiplayer,
 	OnCommandBuffered = OnCommandBuffered,
-	-- OnCommandSent =OnCommandSent,
+	OnCommandSent = OnCommandSent,
 	OnCommandReceived = OnCommandReceived,
+	OnUpdateUserStatus = OnUpdateUserStatus,
 	-- OnUpdateUserBattleStatus = OnUpdateUserBattleStatus,
 	-- BeforeCommandSent = BeforeCommandSent,
+	-- BeforeOnCommandReceived = BeforeOnCommandReceived,
 	OnLeftBattle = OnLeftBattle,
 	-- OnLeftBattle = PlayersUpdate,
 	OnJoinedBattle = OnJoinedBattle,

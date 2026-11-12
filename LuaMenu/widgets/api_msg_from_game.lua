@@ -269,7 +269,13 @@ local function ReceiveMessage(msg, cli, writeable) -- WE CAN ASLO DISCUSS THROUG
 	--     end
 	--     lobby:_SendCommand(msg)
 	elseif msg:find('^getrunningsince') then
-		local myBattleID = lobby:GetMyBattleID()
+		local myBattleID
+		local me = lobby.users[lobby:GetMyUserName()]
+		if me.inBattle and me.isInGame then
+			myBattleID = me.inBattle
+		else
+			myBattleID = lobby:GetMyBattleID()
+		end
 		if myBattleID then
 			local battle = lobby:GetBattle(myBattleID)
 			if battle and battle.runningSince then
@@ -277,6 +283,58 @@ local function ReceiveMessage(msg, cli, writeable) -- WE CAN ASLO DISCUSS THROUG
 				Spring.SendLuaUIMsg('gamerunningsince_'..delta)
 			end
 		end
+	elseif msg:find('^get_userinfo ') then
+		local userName = sentence(msg,1)
+		if not userName then
+			Echo('Error Command "getuserinfo": no user name given.')
+			return
+		end
+		local user = lobby.users[userName]
+		if not user then
+			Echo('Error Command "getuserinfo": couldn\'t find user ' .. userName .. ' in lobby.')
+			return
+		end
+		local order = {'userName', 'accountID', 'steamID', 'isAdmin', 'isBot', 'avatar', 'icon', 'level', 'skill', 'casualSkill', 'country', 'clan', 'faction', 'isInGame', 'isAway', 'inGameSince', }
+		local msg_table = {}
+		for i, key in ipairs(order) do
+			msg_table[#msg_table + 1] = tostring(user[key])
+		end
+		Spring.SendLuaUIMsg('userinfo '..table.concat(msg_table, '|'))
+
+	elseif msg:find('^get_mybattleinfo') then
+		local myBattleID
+		local me = lobby.users[lobby:GetMyUserName()]
+		if me.inBattle and me.isInGame then
+			myBattleID = me.inBattle
+		else
+			myBattleID = lobby:GetMyBattleID()
+		end
+		if not myBattleID then
+			Echo('Error Command "getmybattleinfo": not currently in battle.')
+			return
+		end
+		local battle = lobby:GetBattle(myBattleID)
+		if not battle then
+			Echo('Error Command "getmybattleinfo": myBattleID ' .. myBattleID .. ' doesn\'t exist anymore.')
+			return
+		end
+		local order = {
+			'title', 'battleID', 'founder',
+			'playerCount', 'battleMode', 'engineName',
+			'engineVersion', 'gameName', 'mapName',
+			'maxPlayers', 'maxEvenPlayers',	'spectatorCount',
+			'runningSince',	'lastRunningTime', 'passworded',
+			'isMatchMaker',	'isRunning', 'disallowBots',
+			'disallowCustomTeams',
+			-- 'users',
+			-- 'battleAis',
+		}
+		local msg_table = {}
+		for i, key in ipairs(order) do
+			msg_table[#msg_table + 1] = tostring(battle[key])
+		end
+		Spring.SendLuaUIMsg('mybattleinfo '..table.concat(msg_table, '|'))
+
 	else
 		WG.Chotify:Post{
 			title = '',
