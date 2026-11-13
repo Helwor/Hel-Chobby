@@ -915,21 +915,21 @@ local function OnUpdateUserStatus(_, name, status, old)
 					end
 				end
 			else
+				changed[k] = true
 				if debugging then
-					changed[k] = true
 					Echo('['..name..']['..k..'] ' .. tostring(old[k]) .. ' => ' .. tostring(v))
 				end
 			end
 		end
 	end
 	if changed.isAway then
-		Spring.SendLuaUIMsg('afk_changed ' .. name .. ' '.. (changed.isAway and '1' or '0'))
+		Spring.SendLuaUIMsg('afk_changed ' .. name .. ' '.. (user.isAway and '1' or '0'))
 	end
 
 end
 
 local function BeforeOnCommandReceived(_, command)
-	Echo('BEFORE COMMAND', command:sub(1, 50))
+	-- Echo('BEFORE COMMAND', command:sub(1, 50))
 	-- if command:find('^User ') then
 	-- 	if command:find('"IsAway":') and command:find('"Name":') then
 	-- 		local isAfk, name = not not command:match('"IsAway":(true)'), command:match('"Name":"([^"]+)"')
